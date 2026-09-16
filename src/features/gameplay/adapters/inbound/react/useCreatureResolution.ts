@@ -17,7 +17,6 @@ import type {
 import { applyCreatureAction } from '../../../application/use-cases/applyCreatureAction';
 import { createCreatureResolution } from '../../../application/use-cases/createCreatureResolution';
 import { createLetterProjectiles } from '../../../application/use-cases/createLetterProjectiles';
-import { MISTAKE_VISIBLE_MS, RESOLUTION_FEEDBACK_MS } from '../../../constants/interaction';
 
 /*** Delay every creature consequence behind one calm translated feedback phase. */
 export function useCreatureResolution(input: CreatureResolutionInput) {
@@ -79,41 +78,52 @@ function beginCreatureResolution(
   clearTimer(context.timerRef);
   context.timerRef.current = window.setTimeout(
     () => completeCreatureResolution(creature, resolution, context),
-    RESOLUTION_FEEDBACK_MS,
+    context.sceneRef.current.gameplayConfig.resolutionFeedbackMs,
   );
   return true;
 }
 
-/*** Commit the delayed action, then trigger its projectile or mistake consequence. */
+/*** Commit the delayed action, then trigger its physical projectile or mistake consequence. */
 function completeCreatureResolution(
   creature: CreatureViewModel,
   resolution: CreatureResolution,
   context: CreatureResolutionContext,
 ) {
-  const result = applyCreatureAction(context.sceneRef.current, creature.id, resolution.action);
+  const scene = context.sceneRef.current;
+  const result = applyCreatureAction(scene, creature.id, resolution.action);
   context.sceneRef.current = result.scene;
   context.setScene(result.scene);
-  if (result.outcome === 'destroyed') emitLetterProjectiles(creature, context);
-  if (result.outcome === 'mistake') showMistake(creature.id, context);
+  if (resolution.action === 'shoot') emitLetterProjectiles(creature, scene, context);
+  if (result.outcome === 'mistake' && resolution.action === 'collect') {
+    showMistake(creature.id, context);
+  }
   context.resolutionRef.current = null;
   context.setResolution(null);
   context.timerRef.current = null;
 }
 
 /*** Emit one deterministic falling projectile per German translation letter. */
-function emitLetterProjectiles(creature: CreatureViewModel, context: CreatureResolutionContext) {
+function emitLetterProjectiles(
+  creature: CreatureViewModel,
+  scene: GameScene,
+  context: CreatureResolutionContext,
+) {
   context.letterSequenceRef.current += 1;
-  const projectiles = createLetterProjectiles(creature, context.letterSequenceRef.current);
+  const projectiles = createLetterProjectiles(
+    creature,
+    context.letterSequenceRef.current,
+    scene.gameplayConfig,
+  );
   context.setLetterProjectiles((current) => [...current, ...projectiles]);
 }
 
-/*** Show the existing short mistake shake after translated feedback completes. */
+/*** Show the existing short mistake shake after a wrong collect completes. */
 function showMistake(creatureId: string, context: CreatureResolutionContext) {
   context.setMistakeCreatureId(creatureId);
   clearTimer(context.mistakeTimerRef);
   context.mistakeTimerRef.current = window.setTimeout(
     () => context.setMistakeCreatureId(null),
-    MISTAKE_VISIBLE_MS,
+    context.sceneRef.current.gameplayConfig.mistakeVisibleMs,
   );
 }
 
