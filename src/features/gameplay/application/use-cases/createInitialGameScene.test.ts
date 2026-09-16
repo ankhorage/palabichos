@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+
 import { createInitialGameScene } from './createInitialGameScene';
 
 describe('createInitialGameScene', () => {

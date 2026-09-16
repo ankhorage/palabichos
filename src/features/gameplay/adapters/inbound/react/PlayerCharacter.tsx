@@ -16,6 +16,6 @@ export function PlayerCharacter({ xPercent }: PlayerCharacterProps) {
   );
 }
 
-type PlayerCharacterProps = {
+interface PlayerCharacterProps {
   readonly xPercent: number;
-};
+}

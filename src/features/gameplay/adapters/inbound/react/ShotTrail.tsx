@@ -25,6 +25,6 @@ export function ShotTrail({ shot }: ShotTrailProps) {
   );
 }
 
-type ShotTrailProps = {
+interface ShotTrailProps {
   readonly shot: ShotViewModel;
-};
+}

@@ -1,7 +1,8 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { createInitialGameScene } from './features/gameplay/application/use-cases/createInitialGameScene';
+
 import { GameScreen } from './features/gameplay/adapters/inbound/react/GameScreen';
+import { createInitialGameScene } from './features/gameplay/application/use-cases/createInitialGameScene';
 
 const rootElement = document.getElementById('root');
 
