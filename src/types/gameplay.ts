@@ -15,6 +15,7 @@ type CreatureActionOutcome = 'collected' | 'destroyed' | 'mistake' | 'ignored';
 interface WordEntry {
   readonly id: string;
   readonly text: string;
+  readonly translation: string;
   readonly categories: readonly WordCategory[];
 }
 
@@ -41,6 +42,15 @@ export interface LevelDefinition {
 
 export interface CreatureViewModel extends CreatureSeed {
   readonly matchesTarget: boolean;
+}
+
+export interface CreatureResolution {
+  readonly id: number;
+  readonly creatureId: string;
+  readonly action: CreatureAction;
+  readonly translation: string;
+  readonly matchesTarget: boolean;
+  readonly isCorrect: boolean;
 }
 
 export interface GameScene {
