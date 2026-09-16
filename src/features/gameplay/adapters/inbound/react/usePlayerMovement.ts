@@ -1,31 +1,38 @@
-import { type PointerEvent as ReactPointerEvent, useRef, useState } from 'react';
+import { type PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react';
 
-/*** Bind the lower playfield band to calm horizontal player press-and-drag movement. */
-export function usePlayerMovement() {
+/*** Bind touch, mouse, trackpad, and keyboard input to calm horizontal player movement. */
+export function usePlayerMovement(enabled = true) {
   const [xPercent, setXPercent] = useState(50);
   const pointerIdRef = useRef<number | null>(null);
   const context: PlayerMovementContext = { pointerIdRef, setXPercent };
 
+  useEffect(() => bindKeyboardMovement(enabled, setXPercent), [enabled]);
+
   return {
     xPercent,
-    onPointerCancel: (event: ReactPointerEvent<HTMLElement>) => finishMovement(event, context),
-    onPointerDown: (event: ReactPointerEvent<HTMLElement>) => startMovement(event, context),
-    onPointerMove: (event: ReactPointerEvent<HTMLElement>) => movePlayer(event, context),
-    onPointerUp: (event: ReactPointerEvent<HTMLElement>) => finishMovement(event, context),
+    handlers: {
+      onPointerCancel: (event: ReactPointerEvent<HTMLElement>) => finishMovement(event, context),
+      onPointerDown: (event: ReactPointerEvent<HTMLElement>) => startMovement(event, context, enabled),
+      onPointerMove: (event: ReactPointerEvent<HTMLElement>) => movePlayer(event, context, enabled),
+      onPointerUp: (event: ReactPointerEvent<HTMLElement>) => finishMovement(event, context),
+    },
   };
 }
 
 interface PlayerMovementContext {
   readonly pointerIdRef: { current: number | null };
-  readonly setXPercent: (xPercent: number) => void;
+  readonly setXPercent: (xPercent: number | ((xPercent: number) => number)) => void;
 }
 
-/*** Capture a primary pointer only when it starts inside the visible lower movement zone. */
-function startMovement(event: ReactPointerEvent<HTMLElement>, context: PlayerMovementContext) {
-  if (event.button !== 0 || context.pointerIdRef.current !== null) return;
-  const bounds = event.currentTarget.getBoundingClientRect();
-  const yPercent = ((event.clientY - bounds.top) / bounds.height) * 100;
-  if (yPercent < MOVEMENT_ZONE_START_PERCENT) return;
+/*** Capture a primary touch/pen pointer only when it starts inside the lower movement zone. */
+function startMovement(
+  event: ReactPointerEvent<HTMLElement>,
+  context: PlayerMovementContext,
+  enabled: boolean,
+) {
+  if (!enabled || event.button !== 0 || context.pointerIdRef.current !== null) return;
+  if (event.pointerType === 'mouse') return;
+  if (!isInsideMovementZone(event)) return;
 
   event.preventDefault();
   event.currentTarget.setPointerCapture(event.pointerId);
@@ -33,12 +40,21 @@ function startMovement(event: ReactPointerEvent<HTMLElement>, context: PlayerMov
   setPlayerPosition(event, context);
 }
 
-/*** Follow horizontal movement while the playfield owns the active movement pointer. */
-function movePlayer(event: ReactPointerEvent<HTMLElement>, context: PlayerMovementContext) {
-  if (context.pointerIdRef.current === event.pointerId) setPlayerPosition(event, context);
+/*** Follow touch drag or desktop hover movement while the pointer is inside the dodge band. */
+function movePlayer(
+  event: ReactPointerEvent<HTMLElement>,
+  context: PlayerMovementContext,
+  enabled: boolean,
+) {
+  if (!enabled) return;
+  if (context.pointerIdRef.current === event.pointerId) {
+    setPlayerPosition(event, context);
+    return;
+  }
+  if (event.pointerType === 'mouse' && isInsideMovementZone(event)) setPlayerPosition(event, context);
 }
 
-/*** Release playfield pointer capture at the end of a movement gesture. */
+/*** Release playfield pointer capture at the end of a touch movement gesture. */
 function finishMovement(event: ReactPointerEvent<HTMLElement>, context: PlayerMovementContext) {
   if (context.pointerIdRef.current !== event.pointerId) return;
   if (event.currentTarget.hasPointerCapture(event.pointerId)) {
@@ -51,9 +67,46 @@ function finishMovement(event: ReactPointerEvent<HTMLElement>, context: PlayerMo
 function setPlayerPosition(event: ReactPointerEvent<HTMLElement>, context: PlayerMovementContext) {
   const bounds = event.currentTarget.getBoundingClientRect();
   const rawPercent = ((event.clientX - bounds.left) / bounds.width) * 100;
-  context.setXPercent(Math.min(PLAYER_MAX_X_PERCENT, Math.max(PLAYER_MIN_X_PERCENT, rawPercent)));
+  context.setXPercent(clampPlayerX(rawPercent));
 }
 
-const MOVEMENT_ZONE_START_PERCENT = 75;
+/*** Return whether a pointer event lies inside the broad lower dodge band. */
+function isInsideMovementZone(event: ReactPointerEvent<HTMLElement>) {
+  const bounds = event.currentTarget.getBoundingClientRect();
+  const yPercent = ((event.clientY - bounds.top) / bounds.height) * 100;
+  return yPercent >= MOVEMENT_ZONE_START_PERCENT;
+}
+
+/*** Register desktop Arrow/A/D movement and return its effect cleanup. */
+function bindKeyboardMovement(
+  enabled: boolean,
+  setXPercent: (xPercent: number | ((xPercent: number) => number)) => void,
+) {
+  if (!enabled) return undefined;
+
+  const handleKeyDown = (event: KeyboardEvent) => {
+    const direction = keyboardDirection(event.key);
+    if (direction === 0) return;
+    event.preventDefault();
+    setXPercent((xPercent) => clampPlayerX(xPercent + direction * KEYBOARD_STEP_PERCENT));
+  };
+  window.addEventListener('keydown', handleKeyDown);
+  return () => window.removeEventListener('keydown', handleKeyDown);
+}
+
+/*** Map supported desktop movement keys to a horizontal direction. */
+function keyboardDirection(key: string) {
+  if (key === 'ArrowLeft' || key.toLowerCase() === 'a') return -1;
+  if (key === 'ArrowRight' || key.toLowerCase() === 'd') return 1;
+  return 0;
+}
+
+/*** Clamp one requested player coordinate to the safe visible horizontal range. */
+function clampPlayerX(xPercent: number) {
+  return Math.min(PLAYER_MAX_X_PERCENT, Math.max(PLAYER_MIN_X_PERCENT, xPercent));
+}
+
+const MOVEMENT_ZONE_START_PERCENT = 65;
 const PLAYER_MIN_X_PERCENT = 9;
 const PLAYER_MAX_X_PERCENT = 91;
+const KEYBOARD_STEP_PERCENT = 5;
