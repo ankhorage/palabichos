@@ -2,93 +2,26 @@ import {
   type Dispatch,
   type MutableRefObject,
   type SetStateAction,
-  useCallback,
   useEffect,
   useRef,
 } from 'react';
 
-import type {
-  GameScene,
-  LetterProjectileSpec,
-  ShotViewModel,
-} from '../../../../../types/gameplay';
+import type { GameScene, LetterProjectileSpec, ShotViewModel } from '../../../../../types/gameplay';
 import { advanceGameScene } from '../../../application/use-cases/advanceGameScene';
 import { restartGameScene } from '../../../application/use-cases/restartGameScene';
 
 /*** Bind level-complete timing and game-over restart behavior to pure lifecycle transitions. */
-export function useGameLifecycle({
-  resetInvulnerability,
-  resetPlayer,
-  scene,
-  sceneRef,
-  setLetterProjectiles,
-  setMistakeCreatureId,
-  setScene,
-  setShot,
-}: GameLifecycleInput) {
-  const transitionTimerRef = useRef<number | null>(null);
+export function useGameLifecycle(input: GameLifecycleInput) {
+  useAutomaticLevelAdvance(input);
 
-  useEffect(() => {
-    if (scene.phase !== 'level-complete') return undefined;
-
-    clearTransitionTimer(transitionTimerRef);
-    transitionTimerRef.current = window.setTimeout(() => {
-      replaceScene(advanceGameScene(sceneRef.current), {
-        resetInvulnerability,
-        resetPlayer,
-        sceneRef,
-        setLetterProjectiles,
-        setMistakeCreatureId,
-        setScene,
-        setShot,
-      });
-    }, LEVEL_COMPLETE_VISIBLE_MS);
-
-    return () => clearTransitionTimer(transitionTimerRef);
-  }, [
-    resetInvulnerability,
-    resetPlayer,
-    scene.phase,
-    sceneRef,
-    setLetterProjectiles,
-    setMistakeCreatureId,
-    setScene,
-    setShot,
-  ]);
-
-  const restartCurrentLevel = useCallback(() => {
-    clearTransitionTimer(transitionTimerRef);
-    replaceScene(restartGameScene(sceneRef.current), {
-      resetInvulnerability,
-      resetPlayer,
-      sceneRef,
-      setLetterProjectiles,
-      setMistakeCreatureId,
-      setScene,
-      setShot,
-    });
-  }, [
-    resetInvulnerability,
-    resetPlayer,
-    sceneRef,
-    setLetterProjectiles,
-    setMistakeCreatureId,
-    setScene,
-    setShot,
-  ]);
-
-  return { restartCurrentLevel };
+  return {
+    restartCurrentLevel: () =>
+      replaceScene(restartGameScene(input.sceneRef.current), replacementContext(input)),
+  };
 }
 
-interface GameLifecycleInput {
-  readonly resetInvulnerability: () => void;
-  readonly resetPlayer: () => void;
+interface GameLifecycleInput extends SceneReplacementContext {
   readonly scene: GameScene;
-  readonly sceneRef: MutableRefObject<GameScene>;
-  readonly setLetterProjectiles: Dispatch<SetStateAction<readonly LetterProjectileSpec[]>>;
-  readonly setMistakeCreatureId: Dispatch<SetStateAction<string | null>>;
-  readonly setScene: Dispatch<SetStateAction<GameScene>>;
-  readonly setShot: Dispatch<SetStateAction<ShotViewModel | null>>;
 }
 
 interface SceneReplacementContext {
@@ -99,6 +32,45 @@ interface SceneReplacementContext {
   readonly setMistakeCreatureId: Dispatch<SetStateAction<string | null>>;
   readonly setScene: Dispatch<SetStateAction<GameScene>>;
   readonly setShot: Dispatch<SetStateAction<ShotViewModel | null>>;
+}
+
+/*** Schedule the short success pause before advancing to the next catalog level. */
+function useAutomaticLevelAdvance({ scene, ...context }: GameLifecycleInput) {
+  const transitionTimerRef = useRef<number | null>(null);
+  const {
+    resetInvulnerability,
+    resetPlayer,
+    sceneRef,
+    setLetterProjectiles,
+    setMistakeCreatureId,
+    setScene,
+    setShot,
+  } = context;
+
+  useEffect(() => {
+    if (scene.phase !== 'level-complete') return undefined;
+
+    transitionTimerRef.current = window.setTimeout(
+      () => replaceScene(advanceGameScene(sceneRef.current), context),
+      LEVEL_COMPLETE_VISIBLE_MS,
+    );
+    return () => clearTransitionTimer(transitionTimerRef);
+  }, [
+    context,
+    resetInvulnerability,
+    resetPlayer,
+    scene.phase,
+    sceneRef,
+    setLetterProjectiles,
+    setMistakeCreatureId,
+    setScene,
+    setShot,
+  ]);
+}
+
+/*** Select the transient-state fields needed when rebuilding a gameplay scene. */
+function replacementContext({ scene: _scene, ...context }: GameLifecycleInput) {
+  return context;
 }
 
 /*** Replace the active scene and clear transient browser presentation state. */
