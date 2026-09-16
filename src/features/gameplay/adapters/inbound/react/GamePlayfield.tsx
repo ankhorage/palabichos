@@ -2,6 +2,7 @@ import type { PointerEventHandler } from 'react';
 
 import type {
   CreatureAction,
+  CreatureResolution,
   CreatureViewModel,
   GameScene,
   LetterProjectileSpec,
@@ -24,9 +25,12 @@ export function GamePlayfield({
   onLetterProjectileCrossPlayerLane,
   onRestart,
   playerXPercent,
+  resolution,
   scene,
   shot,
 }: GamePlayfieldProps) {
+  const interactionsDisabled = resolution !== null || scene.phase !== 'playing';
+
   return (
     <section
       className="playfield"
@@ -41,7 +45,9 @@ export function GamePlayfield({
         <WordCreature
           key={creature.id}
           creature={creature}
+          disabled={interactionsDisabled}
           mistake={mistakeCreatureId === creature.id}
+          resolution={resolution?.creatureId === creature.id ? resolution : null}
           onAction={onCreatureAction}
         />
       ))}
@@ -77,6 +83,7 @@ interface GamePlayfieldProps {
   ) => void;
   readonly onRestart: () => void;
   readonly playerXPercent: number;
+  readonly resolution: CreatureResolution | null;
   readonly scene: GameScene;
   readonly shot: ShotViewModel | null;
 }
