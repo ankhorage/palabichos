@@ -1,0 +1,528 @@
+:root {
+  color-scheme: dark;
+  font-family:
+    Inter, ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, -apple-system, sans-serif;
+  background: #10172a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  position: fixed;
+  inset: 0;
+  min-width: 320px;
+  background: #10172a;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.game-screen {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  gap: clamp(10px, 2.2vw, 18px);
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding:
+    max(12px, env(safe-area-inset-top))
+    max(14px, env(safe-area-inset-right))
+    max(10px, env(safe-area-inset-bottom))
+    max(14px, env(safe-area-inset-left));
+  overflow: hidden;
+  touch-action: none;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 50% -10%, rgba(139, 128, 255, 0.3), transparent 37%),
+    linear-gradient(180deg, #111a31 0%, #18233f 45%, #1a2b3b 72%, #10241f 100%);
+}
+
+.sky-glow {
+  position: absolute;
+  z-index: -4;
+  top: -18%;
+  left: 50%;
+  width: min(120vw, 900px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(121, 104, 246, 0.22), transparent 67%);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.stars {
+  position: absolute;
+  z-index: -3;
+  inset: 0;
+  opacity: 0.55;
+  background-image:
+    radial-gradient(circle at 11% 16%, #fff 0 1px, transparent 1.5px),
+    radial-gradient(circle at 82% 11%, #fff 0 1px, transparent 1.5px),
+    radial-gradient(circle at 68% 28%, #fff 0 1px, transparent 1.5px),
+    radial-gradient(circle at 27% 36%, #fff 0 1px, transparent 1.5px),
+    radial-gradient(circle at 91% 43%, #fff 0 1px, transparent 1.5px),
+    radial-gradient(circle at 7% 51%, #fff 0 1px, transparent 1.5px);
+  pointer-events: none;
+}
+
+.game-hud {
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.level-chip {
+  padding: 7px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(10, 14, 29, 0.3);
+  font-size: clamp(10px, 2.8vw, 12px);
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  backdrop-filter: blur(8px);
+}
+
+.health {
+  display: flex;
+  gap: 4px;
+  color: #ff7e9c;
+  font-size: clamp(15px, 4vw, 19px);
+  filter: drop-shadow(0 2px 6px rgba(255, 89, 133, 0.2));
+}
+
+.task-panel {
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  padding: clamp(12px, 3vw, 18px) clamp(14px, 4vw, 22px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: clamp(18px, 5vw, 26px);
+  background: rgba(13, 18, 37, 0.56);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(14px);
+}
+
+.task-kicker {
+  margin: 0 0 2px;
+  color: #93a4c8;
+  font-size: clamp(9px, 2.5vw, 11px);
+  font-weight: 800;
+  letter-spacing: 0.22em;
+}
+
+.task-panel h1 {
+  margin: 0;
+  color: #f7f5ff;
+  font-size: clamp(23px, 7vw, 38px);
+  line-height: 0.98;
+  letter-spacing: 0.035em;
+}
+
+.progress {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  flex: none;
+  color: #aeb9d4;
+  font-size: clamp(13px, 3.6vw, 17px);
+}
+
+.progress strong {
+  color: #d9ffbe;
+  font-size: clamp(27px, 7vw, 38px);
+  line-height: 1;
+}
+
+.playfield {
+  position: relative;
+  z-index: 1;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: clamp(24px, 6vw, 34px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background:
+    radial-gradient(circle at 50% 110%, rgba(78, 168, 124, 0.21), transparent 46%),
+    linear-gradient(180deg, rgba(18, 27, 52, 0.36), rgba(10, 24, 32, 0.58));
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 -40px 80px rgba(4, 16, 20, 0.22);
+}
+
+.moon {
+  position: absolute;
+  top: 8%;
+  right: 8%;
+  width: clamp(34px, 10vw, 64px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  opacity: 0.78;
+  background: #f7edc6;
+  box-shadow: 0 0 34px rgba(255, 239, 188, 0.2);
+}
+
+.moon::after {
+  content: "";
+  position: absolute;
+  top: -10%;
+  left: -18%;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: #17243c;
+}
+
+.hill {
+  position: absolute;
+  right: -18%;
+  bottom: -11%;
+  left: -18%;
+  height: 29%;
+  border-radius: 50% 50% 0 0 / 70% 70% 0 0;
+  pointer-events: none;
+}
+
+.hill-back {
+  bottom: -5%;
+  background: #17362d;
+  transform: rotate(-2deg);
+}
+
+.hill-front {
+  bottom: -14%;
+  height: 31%;
+  background: #10291f;
+  transform: rotate(2deg);
+}
+
+.baseline {
+  position: absolute;
+  right: 7%;
+  bottom: 8.5%;
+  left: 7%;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(188, 255, 198, 0.5), transparent);
+  box-shadow: 0 0 18px rgba(134, 255, 169, 0.18);
+}
+
+.word-creature {
+  position: absolute;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: clamp(76px, 21vw, 112px);
+  height: clamp(55px, 15vw, 78px);
+  padding: 12px 13px 10px;
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  border-radius: 46% 54% 51% 49% / 58% 48% 52% 42%;
+  transform: translate(-50%, -50%);
+  box-shadow:
+    inset 0 2px rgba(255, 255, 255, 0.18),
+    0 12px 28px rgba(5, 10, 25, 0.24);
+  will-change: transform;
+}
+
+.word-creature--mint {
+  color: #11362f;
+  background: linear-gradient(145deg, #a9efc8, #6bcba8);
+}
+
+.word-creature--berry {
+  color: #48203b;
+  background: linear-gradient(145deg, #ffb1ca, #e781ad);
+}
+
+.word-creature--sun {
+  color: #4b3714;
+  background: linear-gradient(145deg, #ffe7a7, #efbd67);
+}
+
+.word-creature--lavender {
+  color: #34264d;
+  background: linear-gradient(145deg, #d3c6ff, #a690e7);
+}
+
+.word-creature--bob {
+  animation-name: creature-bob;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+.word-creature--drift {
+  animation-name: creature-drift;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+.word-creature--sway {
+  animation-name: creature-sway;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+.word-label {
+  position: relative;
+  z-index: 2;
+  margin-top: 12px;
+  font-size: clamp(14px, 4.2vw, 19px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px rgba(255, 255, 255, 0.25);
+  white-space: nowrap;
+}
+
+.creature-face {
+  position: absolute;
+  top: 11px;
+  left: 50%;
+  display: flex;
+  gap: 9px;
+  transform: translateX(-50%);
+}
+
+.eye {
+  width: 5px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.8;
+}
+
+.antenna {
+  position: absolute;
+  top: -10px;
+  width: 14px;
+  height: 16px;
+  border-top: 2px solid currentColor;
+  opacity: 0.5;
+}
+
+.antenna-left {
+  left: 25%;
+  border-left: 2px solid currentColor;
+  border-radius: 10px 0 0;
+  transform: rotate(-18deg);
+}
+
+.antenna-right {
+  right: 25%;
+  border-right: 2px solid currentColor;
+  border-radius: 0 10px 0 0;
+  transform: rotate(18deg);
+}
+
+.creature-feet {
+  position: absolute;
+  right: 21%;
+  bottom: -7px;
+  left: 21%;
+  display: flex;
+  justify-content: space-between;
+}
+
+.creature-feet span {
+  width: 19px;
+  height: 9px;
+  border-radius: 50%;
+  background: inherit;
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.15);
+}
+
+.player {
+  position: absolute;
+  z-index: 6;
+  bottom: 6.5%;
+  left: 50%;
+  width: clamp(56px, 15vw, 78px);
+  height: clamp(79px, 21vw, 108px);
+  transform: translateX(-50%);
+}
+
+.player-shadow {
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  width: 76%;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.24);
+  filter: blur(3px);
+  transform: translateX(-50%);
+}
+
+.player-head {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  left: 50%;
+  width: 58%;
+  aspect-ratio: 1;
+  border: 3px solid rgba(255, 255, 255, 0.28);
+  border-radius: 48% 52% 48% 52%;
+  background: linear-gradient(145deg, #e9f6ff, #a9c6e8);
+  box-shadow: inset 0 2px rgba(255, 255, 255, 0.55);
+  transform: translateX(-50%);
+}
+
+.player-eye {
+  position: absolute;
+  top: 45%;
+  width: 5px;
+  height: 7px;
+  border-radius: 50%;
+  background: #233756;
+}
+
+.player-eye-left {
+  left: 27%;
+}
+
+.player-eye-right {
+  right: 27%;
+}
+
+.player-body {
+  position: absolute;
+  z-index: 2;
+  right: 11%;
+  bottom: 0;
+  left: 11%;
+  display: grid;
+  place-items: center;
+  height: 61%;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  border-radius: 46% 46% 30% 30% / 36% 36% 22% 22%;
+  background: linear-gradient(155deg, #7b6cf5, #5145bb);
+  box-shadow: inset 0 2px rgba(255, 255, 255, 0.18);
+}
+
+.player-emblem {
+  display: grid;
+  place-items: center;
+  width: 27px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  color: #f2efff;
+  background: rgba(19, 19, 56, 0.42);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.player-arm {
+  position: absolute;
+  z-index: 1;
+  top: 48%;
+  width: 27%;
+  height: 33%;
+  border-radius: 999px;
+  background: #6658db;
+}
+
+.player-arm-left {
+  left: 0;
+  transform: rotate(18deg);
+}
+
+.player-arm-right {
+  right: 0;
+  transform: rotate(-18deg);
+}
+
+.game-footer {
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: rgba(222, 231, 246, 0.62);
+  font-size: clamp(10px, 2.8vw, 12px);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #9fdc9c;
+  box-shadow: 0 0 8px rgba(159, 220, 156, 0.5);
+}
+
+@keyframes creature-bob {
+  from {
+    transform: translate(-50%, -50%) translateY(-5px) rotate(-1deg);
+  }
+  to {
+    transform: translate(-50%, -50%) translateY(8px) rotate(1deg);
+  }
+}
+
+@keyframes creature-drift {
+  from {
+    transform: translate(-50%, -50%) translate(-8px, -3px) rotate(-2deg);
+  }
+  to {
+    transform: translate(-50%, -50%) translate(10px, 7px) rotate(2deg);
+  }
+}
+
+@keyframes creature-sway {
+  from {
+    transform: translate(-50%, -50%) translateX(-8px) rotate(-3deg);
+  }
+  to {
+    transform: translate(-50%, -50%) translateX(8px) rotate(3deg);
+  }
+}
+
+@media (min-width: 700px) {
+  .game-screen {
+    grid-template-columns: minmax(0, 760px);
+    justify-content: center;
+  }
+
+  .game-hud,
+  .task-panel,
+  .playfield,
+  .game-footer {
+    grid-column: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .word-creature {
+    animation: none;
+  }
+}

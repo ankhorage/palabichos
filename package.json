@@ -1,0 +1,50 @@
+{
+  "name": "@ankhorage/palabichos",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A chill mobile-first browser arcade game that reinforces Spanish vocabulary through play.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ankhorage/palabichos.git"
+  },
+  "homepage": "https://github.com/ankhorage/palabichos#readme",
+  "bugs": {
+    "url": "https://github.com/ankhorage/palabichos/issues"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "ankhorage": {
+    "renovateSyncProtocol": 1
+  },
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc --noEmit -p tsconfig.json && vite build",
+    "check-types": "tsc --noEmit -p tsconfig.json",
+    "typecheck": "bun run check-types",
+    "preview": "vite preview --host 0.0.0.0",
+    "changeset": "ankhorage-changeset",
+    "changeset:status": "ankhorage-changeset status --since=origin/main",
+    "lint": "ankhorage-eslint . --max-warnings=0",
+    "lint:fix": "ankhorage-eslint . --fix --max-warnings=0",
+    "format": "ankhorage-prettier --write .",
+    "format:check": "ankhorage-prettier --check .",
+    "knip:check": "ankhorage-knip",
+    "version-packages": "ankhorage-changeset version"
+  },
+  "dependencies": {
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@ankhorage/devtools": "^1.15.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "typescript": "~6.0.3",
+    "vite": "^8.3.0"
+  },
+  "packageManager": "bun@1.4.2"
+}

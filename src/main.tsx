@@ -1,0 +1,18 @@
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { createInitialGameScene } from './features/gameplay/application/use-cases/createInitialGameScene';
+import { GameScreen } from './features/gameplay/adapters/inbound/react/GameScreen';
+
+const rootElement = document.getElementById('root');
+
+if (rootElement === null) {
+  throw new Error('Palabichos requires a #root element.');
+}
+
+const scene = createInitialGameScene();
+
+createRoot(rootElement).render(
+  <StrictMode>
+    <GameScreen scene={scene} />
+  </StrictMode>,
+);
