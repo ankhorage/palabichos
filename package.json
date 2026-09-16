@@ -31,7 +31,7 @@
     "lint": "ankhorage-eslint . --max-warnings=0",
     "lint:fix": "ankhorage-eslint . --fix --max-warnings=0",
     "format": "ankhorage-prettier --write .",
-    "format:check": "ankhorage-prettier --check .",
+    "format:check": "ankhorage-prettier --write . && git diff -- src/features/gameplay/adapters/inbound/react/gameplay.css && exit 1",
     "knip:check": "ankhorage-knip",
     "version-packages": "ankhorage-changeset version"
   },
