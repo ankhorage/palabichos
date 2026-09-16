@@ -33,15 +33,18 @@ export function useCreatureGesture(
 
   return {
     holding,
-    onClick: (event: ReactMouseEvent<HTMLButtonElement>) =>
-      handleKeyboardClick(event, creature, onAction),
-    onPointerCancel: (event: ReactPointerEvent<HTMLButtonElement>) =>
-      handlePointerCancel(event, state),
-    onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) =>
-      handlePointerDown(event, state, creature, onAction),
-    onPointerMove: (event: ReactPointerEvent<HTMLButtonElement>) => handlePointerMove(event, state),
-    onPointerUp: (event: ReactPointerEvent<HTMLButtonElement>) =>
-      handlePointerUp(event, state, creature, onAction),
+    handlers: {
+      onClick: (event: ReactMouseEvent<HTMLButtonElement>) =>
+        handleKeyboardClick(event, creature, onAction),
+      onPointerCancel: (event: ReactPointerEvent<HTMLButtonElement>) =>
+        handlePointerCancel(event, state),
+      onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) =>
+        handlePointerDown(event, state, creature, onAction),
+      onPointerMove: (event: ReactPointerEvent<HTMLButtonElement>) =>
+        handlePointerMove(event, state),
+      onPointerUp: (event: ReactPointerEvent<HTMLButtonElement>) =>
+        handlePointerUp(event, state, creature, onAction),
+    },
   };
 }
 
