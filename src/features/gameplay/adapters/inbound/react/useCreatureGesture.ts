@@ -15,16 +15,21 @@ export function useCreatureGesture(
   onAction: (creature: CreatureViewModel, action: CreatureAction) => void,
 ) {
   const [holding, setHolding] = useState(false);
+  const activePointerIdRef = useRef<number | null>(null);
+  const cancelledRef = useRef(false);
+  const completedRef = useRef(false);
+  const holdTimerRef = useRef<number | null>(null);
+  const pointerStartRef = useRef<PointerStart | null>(null);
   const state: CreatureGestureState = {
-    activePointerIdRef: useRef<number | null>(null),
-    cancelledRef: useRef(false),
-    completedRef: useRef(false),
-    holdTimerRef: useRef<number | null>(null),
-    pointerStartRef: useRef<PointerStart | null>(null),
+    activePointerIdRef,
+    cancelledRef,
+    completedRef,
+    holdTimerRef,
+    pointerStartRef,
     setHolding,
   };
 
-  useEffect(() => () => clearHoldTimer(state), [state.holdTimerRef]);
+  useEffect(() => () => clearHoldTimerRef(holdTimerRef), [holdTimerRef]);
 
   return {
     holding,
@@ -34,8 +39,7 @@ export function useCreatureGesture(
       handlePointerCancel(event, state),
     onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) =>
       handlePointerDown(event, state, creature, onAction),
-    onPointerMove: (event: ReactPointerEvent<HTMLButtonElement>) =>
-      handlePointerMove(event, state),
+    onPointerMove: (event: ReactPointerEvent<HTMLButtonElement>) => handlePointerMove(event, state),
     onPointerUp: (event: ReactPointerEvent<HTMLButtonElement>) =>
       handlePointerUp(event, state, creature, onAction),
   };
@@ -85,7 +89,10 @@ function handlePointerMove(
   event: ReactPointerEvent<HTMLButtonElement>,
   state: CreatureGestureState,
 ) {
-  if (state.activePointerIdRef.current !== event.pointerId || state.pointerStartRef.current === null) {
+  if (
+    state.activePointerIdRef.current !== event.pointerId ||
+    state.pointerStartRef.current === null
+  ) {
     return;
   }
 
@@ -139,18 +146,20 @@ function handleKeyboardClick(
   if (event.detail === 0) onAction(creature, 'shoot');
 }
 
-/*** Clear the active collection timeout when a gesture ends or the component unmounts. */
+/*** Clear the active collection timeout through the gesture state. */
 function clearHoldTimer(state: CreatureGestureState) {
-  if (state.holdTimerRef.current === null) return;
-  window.clearTimeout(state.holdTimerRef.current);
-  state.holdTimerRef.current = null;
+  clearHoldTimerRef(state.holdTimerRef);
+}
+
+/*** Clear one collection timeout ref when a gesture ends or the component unmounts. */
+function clearHoldTimerRef(timerRef: { current: number | null }) {
+  if (timerRef.current === null) return;
+  window.clearTimeout(timerRef.current);
+  timerRef.current = null;
 }
 
 /*** Release browser pointer capture and reset pointer-specific gesture tracking. */
-function releasePointer(
-  event: ReactPointerEvent<HTMLButtonElement>,
-  state: CreatureGestureState,
-) {
+function releasePointer(event: ReactPointerEvent<HTMLButtonElement>, state: CreatureGestureState) {
   if (event.currentTarget.hasPointerCapture(event.pointerId)) {
     event.currentTarget.releasePointerCapture(event.pointerId);
   }

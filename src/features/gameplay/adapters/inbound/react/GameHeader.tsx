@@ -20,7 +20,10 @@ export function GameHeader({ scene }: GameHeaderProps) {
           <p className="task-kicker">ENCUENTRA</p>
           <h1 id="task-title">{scene.level.title}</h1>
         </div>
-        <div className="progress" aria-label={`${scene.collectedCount} de ${scene.level.targetCount}`}>
+        <div
+          className="progress"
+          aria-label={`${scene.collectedCount} de ${scene.level.targetCount}`}
+        >
           <strong>{scene.collectedCount}</strong>
           <span>/ {scene.level.targetCount}</span>
         </div>

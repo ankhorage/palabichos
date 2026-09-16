@@ -20,7 +20,11 @@ export function GamePlayfield({
   shot,
 }: GamePlayfieldProps) {
   return (
-    <section className="playfield" aria-label={`Categoría ${scene.level.title}`} {...movementHandlers}>
+    <section
+      className="playfield"
+      aria-label={`Categoría ${scene.level.title}`}
+      {...movementHandlers}
+    >
       <div className="moon" aria-hidden="true" />
       <div className="hill hill-back" aria-hidden="true" />
       <div className="hill hill-front" aria-hidden="true" />
