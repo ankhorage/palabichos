@@ -12,7 +12,8 @@ export function usePlayerMovement(enabled = true) {
     xPercent,
     handlers: {
       onPointerCancel: (event: ReactPointerEvent<HTMLElement>) => finishMovement(event, context),
-      onPointerDown: (event: ReactPointerEvent<HTMLElement>) => startMovement(event, context, enabled),
+      onPointerDown: (event: ReactPointerEvent<HTMLElement>) =>
+        startMovement(event, context, enabled),
       onPointerMove: (event: ReactPointerEvent<HTMLElement>) => movePlayer(event, context, enabled),
       onPointerUp: (event: ReactPointerEvent<HTMLElement>) => finishMovement(event, context),
     },
@@ -51,7 +52,9 @@ function movePlayer(
     setPlayerPosition(event, context);
     return;
   }
-  if (event.pointerType === 'mouse' && isInsideMovementZone(event)) setPlayerPosition(event, context);
+  if (event.pointerType === 'mouse' && isInsideMovementZone(event)) {
+    setPlayerPosition(event, context);
+  }
 }
 
 /*** Release playfield pointer capture at the end of a touch movement gesture. */
