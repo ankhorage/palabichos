@@ -10,7 +10,7 @@ import { usePlayerMovement } from './usePlayerMovement';
 /*** Compose the mobile-first Palabichos scene from gameplay state and browser adapters. */
 export function GameScreen({ scene }: GameScreenProps) {
   const movement = usePlayerMovement();
-  const interaction = useGameInteraction(scene, movement.xPercent);
+  const interaction = useGameInteraction(scene, movement.xPercent, movement.reset);
 
   return (
     <main className="game-screen" aria-label="Palabichos">
@@ -28,6 +28,7 @@ export function GameScreen({ scene }: GameScreenProps) {
         onCreatureAction={interaction.onCreatureAction}
         onLetterProjectileComplete={interaction.onLetterProjectileComplete}
         onLetterProjectileCrossPlayerLane={interaction.onLetterProjectileCrossPlayerLane}
+        onRestart={interaction.restartCurrentLevel}
       />
       <footer className="game-footer">
         <span className="status-dot" aria-hidden="true" />
