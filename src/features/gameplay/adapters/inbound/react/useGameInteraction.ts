@@ -19,34 +19,37 @@ export function useGameInteraction(
   resetPlayer: () => void,
 ) {
   const [scene, setScene] = useState(initialScene);
-  const [shot, setShot] = useState<ShotViewModel | null>(null);
-  const [letterProjectiles, setLetterProjectiles] = useState<readonly LetterProjectileSpec[]>([]);
-  const [mistakeCreatureId, setMistakeCreatureId] = useState<string | null>(null);
+  const feedback = useTransientFeedbackState();
   const sceneRef = useRef(initialScene);
   const shotSequenceRef = useRef(0);
   const letterSequenceRef = useRef(0);
   const shotTimerRef = useRef<number | null>(null);
   const mistakeTimerRef = useRef<number | null>(null);
-  const damage = useProjectileDamage({ playerXPercent, sceneRef, setLetterProjectiles, setScene });
+  const damage = useProjectileDamage({
+    playerXPercent,
+    sceneRef,
+    setLetterProjectiles: feedback.setLetterProjectiles,
+    setScene,
+  });
   const lifecycle = useGameLifecycle({
     resetInvulnerability: damage.resetInvulnerability,
     resetPlayer,
     scene,
     sceneRef,
-    setLetterProjectiles,
-    setMistakeCreatureId,
+    setLetterProjectiles: feedback.setLetterProjectiles,
+    setMistakeCreatureId: feedback.setMistakeCreatureId,
     setScene,
-    setShot,
+    setShot: feedback.setShot,
   });
   const context: GameInteractionContext = {
     letterSequenceRef,
     mistakeTimerRef,
     playerXPercent,
     sceneRef,
-    setLetterProjectiles,
-    setMistakeCreatureId,
+    setLetterProjectiles: feedback.setLetterProjectiles,
+    setMistakeCreatureId: feedback.setMistakeCreatureId,
     setScene,
-    setShot,
+    setShot: feedback.setShot,
     shotSequenceRef,
     shotTimerRef,
   };
@@ -56,14 +59,14 @@ export function useGameInteraction(
   return {
     ...damage,
     ...lifecycle,
-    letterProjectiles,
-    mistakeCreatureId,
+    letterProjectiles: feedback.letterProjectiles,
+    mistakeCreatureId: feedback.mistakeCreatureId,
     scene,
-    shot,
+    shot: feedback.shot,
     onCreatureAction: (creature: CreatureViewModel, action: CreatureAction) =>
       handleCreatureAction(creature, action, context),
     onLetterProjectileComplete: (projectileId: string) =>
-      removeLetterProjectile(projectileId, setLetterProjectiles),
+      removeLetterProjectile(projectileId, feedback.setLetterProjectiles),
   };
 }
 
@@ -78,6 +81,21 @@ interface GameInteractionContext {
   readonly setShot: Dispatch<SetStateAction<ShotViewModel | null>>;
   readonly shotSequenceRef: { current: number };
   readonly shotTimerRef: { current: number | null };
+}
+
+/*** Own short-lived React presentation state separately from the gameplay scene. */
+function useTransientFeedbackState() {
+  const [shot, setShot] = useState<ShotViewModel | null>(null);
+  const [letterProjectiles, setLetterProjectiles] = useState<readonly LetterProjectileSpec[]>([]);
+  const [mistakeCreatureId, setMistakeCreatureId] = useState<string | null>(null);
+  return {
+    letterProjectiles,
+    mistakeCreatureId,
+    setLetterProjectiles,
+    setMistakeCreatureId,
+    setShot,
+    shot,
+  };
 }
 
 /*** Apply a creature action and schedule short-lived shot, projectile, or mistake feedback. */
