@@ -20,14 +20,10 @@ export function useGameInteraction(
 ) {
   const [scene, setScene] = useState(initialScene);
   const feedback = useTransientFeedbackState();
-  const sceneRef = useRef(initialScene);
-  const shotSequenceRef = useRef(0);
-  const letterSequenceRef = useRef(0);
-  const shotTimerRef = useRef<number | null>(null);
-  const mistakeTimerRef = useRef<number | null>(null);
+  const runtime = useInteractionRuntime(initialScene);
   const damage = useProjectileDamage({
     playerXPercent,
-    sceneRef,
+    sceneRef: runtime.sceneRef,
     setLetterProjectiles: feedback.setLetterProjectiles,
     setScene,
   });
@@ -35,26 +31,18 @@ export function useGameInteraction(
     resetInvulnerability: damage.resetInvulnerability,
     resetPlayer,
     scene,
-    sceneRef,
+    sceneRef: runtime.sceneRef,
     setLetterProjectiles: feedback.setLetterProjectiles,
     setMistakeCreatureId: feedback.setMistakeCreatureId,
     setScene,
     setShot: feedback.setShot,
   });
-  const context: GameInteractionContext = {
-    letterSequenceRef,
-    mistakeTimerRef,
+  const context = createInteractionContext({
+    feedback,
     playerXPercent,
-    sceneRef,
-    setLetterProjectiles: feedback.setLetterProjectiles,
-    setMistakeCreatureId: feedback.setMistakeCreatureId,
+    runtime,
     setScene,
-    setShot: feedback.setShot,
-    shotSequenceRef,
-    shotTimerRef,
-  };
-
-  useEffect(() => () => clearFeedbackTimers(shotTimerRef, mistakeTimerRef), []);
+  });
 
   return {
     ...damage,
@@ -83,8 +71,38 @@ interface GameInteractionContext {
   readonly shotTimerRef: { current: number | null };
 }
 
+interface InteractionRuntime {
+  readonly letterSequenceRef: { current: number };
+  readonly mistakeTimerRef: { current: number | null };
+  readonly sceneRef: { current: GameScene };
+  readonly shotSequenceRef: { current: number };
+  readonly shotTimerRef: { current: number | null };
+}
+
+interface TransientFeedbackState {
+  readonly letterProjectiles: readonly LetterProjectileSpec[];
+  readonly mistakeCreatureId: string | null;
+  readonly setLetterProjectiles: Dispatch<SetStateAction<readonly LetterProjectileSpec[]>>;
+  readonly setMistakeCreatureId: Dispatch<SetStateAction<string | null>>;
+  readonly setShot: Dispatch<SetStateAction<ShotViewModel | null>>;
+  readonly shot: ShotViewModel | null;
+}
+
+/*** Own browser refs and feedback timer cleanup separately from interaction orchestration. */
+function useInteractionRuntime(initialScene: GameScene): InteractionRuntime {
+  const sceneRef = useRef(initialScene);
+  const shotSequenceRef = useRef(0);
+  const letterSequenceRef = useRef(0);
+  const shotTimerRef = useRef<number | null>(null);
+  const mistakeTimerRef = useRef<number | null>(null);
+
+  useEffect(() => () => clearFeedbackTimers(shotTimerRef, mistakeTimerRef), []);
+
+  return { letterSequenceRef, mistakeTimerRef, sceneRef, shotSequenceRef, shotTimerRef };
+}
+
 /*** Own short-lived React presentation state separately from the gameplay scene. */
-function useTransientFeedbackState() {
+function useTransientFeedbackState(): TransientFeedbackState {
   const [shot, setShot] = useState<ShotViewModel | null>(null);
   const [letterProjectiles, setLetterProjectiles] = useState<readonly LetterProjectileSpec[]>([]);
   const [mistakeCreatureId, setMistakeCreatureId] = useState<string | null>(null);
@@ -96,6 +114,34 @@ function useTransientFeedbackState() {
     setShot,
     shot,
   };
+}
+
+/*** Build the event context from React scene state and browser runtime refs. */
+function createInteractionContext({
+  feedback,
+  playerXPercent,
+  runtime,
+  setScene,
+}: CreateInteractionContextInput): GameInteractionContext {
+  return {
+    letterSequenceRef: runtime.letterSequenceRef,
+    mistakeTimerRef: runtime.mistakeTimerRef,
+    playerXPercent,
+    sceneRef: runtime.sceneRef,
+    setLetterProjectiles: feedback.setLetterProjectiles,
+    setMistakeCreatureId: feedback.setMistakeCreatureId,
+    setScene,
+    setShot: feedback.setShot,
+    shotSequenceRef: runtime.shotSequenceRef,
+    shotTimerRef: runtime.shotTimerRef,
+  };
+}
+
+interface CreateInteractionContextInput {
+  readonly feedback: TransientFeedbackState;
+  readonly playerXPercent: number;
+  readonly runtime: InteractionRuntime;
+  readonly setScene: Dispatch<SetStateAction<GameScene>>;
 }
 
 /*** Apply a creature action and schedule short-lived shot, projectile, or mistake feedback. */
