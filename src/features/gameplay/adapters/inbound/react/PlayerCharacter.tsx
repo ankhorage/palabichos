@@ -1,7 +1,9 @@
 /*** Render the player avatar at the current horizontal gameplay position. */
-export function PlayerCharacter({ xPercent }: PlayerCharacterProps) {
+export function PlayerCharacter({ invulnerable, xPercent }: PlayerCharacterProps) {
+  const className = invulnerable ? 'player player--invulnerable' : 'player';
+
   return (
-    <div className="player" style={{ left: `${xPercent}%` }} aria-label="Jugador">
+    <div className={className} style={{ left: `${xPercent}%` }} aria-label="Jugador">
       <div className="player-shadow" aria-hidden="true" />
       <div className="player-head" aria-hidden="true">
         <span className="player-eye player-eye-left" />
@@ -17,5 +19,6 @@ export function PlayerCharacter({ xPercent }: PlayerCharacterProps) {
 }
 
 interface PlayerCharacterProps {
+  readonly invulnerable: boolean;
   readonly xPercent: number;
 }

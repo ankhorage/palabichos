@@ -154,6 +154,11 @@
   pointer-events: none;
 }
 
+.player--invulnerable {
+  animation: player-invulnerable 220ms ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 9px rgba(210, 236, 255, 0.52));
+}
+
 @keyframes collect-ring-progress {
   to {
     stroke-dashoffset: 0;
@@ -202,6 +207,15 @@
   }
 }
 
+@keyframes player-invulnerable {
+  from {
+    opacity: 0.48;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @keyframes creature-mistake {
   0%,
   100% {
@@ -223,6 +237,7 @@
     animation-duration: 1ms !important;
   }
 
+  .player--invulnerable,
   .shot-line,
   .word-creature--mistake {
     animation: none;

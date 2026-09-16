@@ -74,4 +74,6 @@ export interface LetterProjectileSpec {
   readonly trajectory: LetterTrajectory;
   readonly durationMs: number;
   readonly delayMs: number;
+  readonly impactXPercent: number;
+  readonly impactDelayMs: number;
 }

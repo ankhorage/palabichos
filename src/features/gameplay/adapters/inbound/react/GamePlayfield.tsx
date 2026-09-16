@@ -14,11 +14,13 @@ import { WordCreature } from './WordCreature';
 
 /*** Render the interactive creature field, dodge band, projectiles, and player. */
 export function GamePlayfield({
+  invulnerable,
   letterProjectiles,
   mistakeCreatureId,
   movementHandlers,
   onCreatureAction,
   onLetterProjectileComplete,
+  onLetterProjectileCrossPlayerLane,
   playerXPercent,
   scene,
   shot,
@@ -46,6 +48,7 @@ export function GamePlayfield({
           key={projectile.id}
           projectile={projectile}
           onComplete={onLetterProjectileComplete}
+          onCrossPlayerLane={onLetterProjectileCrossPlayerLane}
         />
       ))}
       {shot === null ? null : <ShotTrail key={shot.id} shot={shot} />}
@@ -53,17 +56,22 @@ export function GamePlayfield({
         <span>mueve</span>
       </div>
       <div className="baseline" aria-hidden="true" />
-      <PlayerCharacter xPercent={playerXPercent} />
+      <PlayerCharacter xPercent={playerXPercent} invulnerable={invulnerable} />
     </section>
   );
 }
 
 interface GamePlayfieldProps {
+  readonly invulnerable: boolean;
   readonly letterProjectiles: readonly LetterProjectileSpec[];
   readonly mistakeCreatureId: string | null;
   readonly movementHandlers: MovementHandlers;
   readonly onCreatureAction: (creature: CreatureViewModel, action: CreatureAction) => void;
   readonly onLetterProjectileComplete: (projectileId: string) => void;
+  readonly onLetterProjectileCrossPlayerLane: (
+    projectileId: string,
+    impactXPercent: number,
+  ) => void;
   readonly playerXPercent: number;
   readonly scene: GameScene;
   readonly shot: ShotViewModel | null;

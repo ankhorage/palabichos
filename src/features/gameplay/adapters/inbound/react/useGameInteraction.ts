@@ -9,6 +9,7 @@ import type {
 } from '../../../../../types/gameplay';
 import { applyCreatureAction } from '../../../application/use-cases/applyCreatureAction';
 import { createLetterProjectiles } from '../../../application/use-cases/createLetterProjectiles';
+import { useProjectileDamage } from './useProjectileDamage';
 
 /*** Own mutable React feedback while delegating gameplay decisions to pure application use cases. */
 export function useGameInteraction(initialScene: GameScene, playerXPercent: number) {
@@ -21,6 +22,7 @@ export function useGameInteraction(initialScene: GameScene, playerXPercent: numb
   const letterSequenceRef = useRef(0);
   const shotTimerRef = useRef<number | null>(null);
   const mistakeTimerRef = useRef<number | null>(null);
+  const damage = useProjectileDamage({ playerXPercent, sceneRef, setLetterProjectiles, setScene });
   const context: GameInteractionContext = {
     letterSequenceRef,
     mistakeTimerRef,
@@ -37,6 +39,7 @@ export function useGameInteraction(initialScene: GameScene, playerXPercent: numb
   useEffect(() => () => clearFeedbackTimers(shotTimerRef, mistakeTimerRef), []);
 
   return {
+    ...damage,
     letterProjectiles,
     mistakeCreatureId,
     scene,

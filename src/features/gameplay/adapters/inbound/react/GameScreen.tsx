@@ -20,12 +20,14 @@ export function GameScreen({ scene }: GameScreenProps) {
       <GamePlayfield
         scene={interaction.scene}
         shot={interaction.shot}
+        invulnerable={interaction.invulnerable}
         letterProjectiles={interaction.letterProjectiles}
         mistakeCreatureId={interaction.mistakeCreatureId}
         playerXPercent={movement.xPercent}
         movementHandlers={movement.handlers}
         onCreatureAction={interaction.onCreatureAction}
         onLetterProjectileComplete={interaction.onLetterProjectileComplete}
+        onLetterProjectileCrossPlayerLane={interaction.onLetterProjectileCrossPlayerLane}
       />
       <footer className="game-footer">
         <span className="status-dot" aria-hidden="true" />

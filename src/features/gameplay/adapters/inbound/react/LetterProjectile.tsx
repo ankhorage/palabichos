@@ -1,7 +1,21 @@
+import { useEffect } from 'react';
+
 import type { LetterProjectileSpec } from '../../../../../types/gameplay';
 
-/*** Render one falling letter projectile from a destroyed word. */
-export function LetterProjectile({ projectile, onComplete }: LetterProjectileProps) {
+/*** Render one falling letter projectile and report when it crosses the player lane. */
+export function LetterProjectile({
+  onComplete,
+  onCrossPlayerLane,
+  projectile,
+}: LetterProjectileProps) {
+  useEffect(() => {
+    const timerId = window.setTimeout(
+      () => onCrossPlayerLane(projectile.id, projectile.impactXPercent),
+      projectile.impactDelayMs,
+    );
+    return () => window.clearTimeout(timerId);
+  }, [onCrossPlayerLane, projectile.id, projectile.impactDelayMs, projectile.impactXPercent]);
+
   return (
     <span
       className={`letter-projectile letter-projectile--${projectile.trajectory}`}
@@ -23,4 +37,5 @@ export function LetterProjectile({ projectile, onComplete }: LetterProjectilePro
 interface LetterProjectileProps {
   readonly projectile: LetterProjectileSpec;
   readonly onComplete: (projectileId: string) => void;
+  readonly onCrossPlayerLane: (projectileId: string, impactXPercent: number) => void;
 }
