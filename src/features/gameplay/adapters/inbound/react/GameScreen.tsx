@@ -7,7 +7,7 @@ import { GamePlayfield } from './GamePlayfield';
 import { useGameInteraction } from './useGameInteraction';
 import { usePlayerMovement } from './usePlayerMovement';
 
-/*** Compose the mobile-first Palabichos scene from gameplay state and pointer adapters. */
+/*** Compose the mobile-first Palabichos scene from gameplay state and browser adapters. */
 export function GameScreen({ scene }: GameScreenProps) {
   const movement = usePlayerMovement();
   const interaction = useGameInteraction(scene, movement.xPercent);
@@ -20,10 +20,12 @@ export function GameScreen({ scene }: GameScreenProps) {
       <GamePlayfield
         scene={interaction.scene}
         shot={interaction.shot}
+        letterProjectiles={interaction.letterProjectiles}
         mistakeCreatureId={interaction.mistakeCreatureId}
         playerXPercent={movement.xPercent}
         movementHandlers={movement.handlers}
         onCreatureAction={interaction.onCreatureAction}
+        onLetterProjectileComplete={interaction.onLetterProjectileComplete}
       />
       <footer className="game-footer">
         <span className="status-dot" aria-hidden="true" />

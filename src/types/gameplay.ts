@@ -6,6 +6,8 @@ type CreatureMotion = 'bob' | 'drift' | 'sway';
 
 type GamePhase = 'playing' | 'level-complete' | 'game-over';
 
+type LetterTrajectory = 'far-left' | 'left' | 'center' | 'right' | 'far-right';
+
 export type CreatureAction = 'collect' | 'shoot';
 
 type CreatureActionOutcome = 'collected' | 'destroyed' | 'mistake' | 'ignored';
@@ -62,4 +64,14 @@ export interface ShotViewModel {
   readonly fromXPercent: number;
   readonly toXPercent: number;
   readonly toYPercent: number;
+}
+
+export interface LetterProjectileSpec {
+  readonly id: string;
+  readonly letter: string;
+  readonly startXPercent: number;
+  readonly startYPercent: number;
+  readonly trajectory: LetterTrajectory;
+  readonly durationMs: number;
+  readonly delayMs: number;
 }
