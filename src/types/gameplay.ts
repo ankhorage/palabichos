@@ -30,6 +30,40 @@ interface CreatureSeed {
   readonly animationDurationSeconds: number;
 }
 
+export interface GameplayConfig {
+  readonly collectHoldMs: number;
+  readonly pointerCancelDistancePx: number;
+  readonly resolutionFeedbackMs: number;
+  readonly mistakeVisibleMs: number;
+  readonly shotVisibleMs: number;
+  readonly startingHealth: number;
+  readonly maxHealth: number;
+  readonly correctActionsPerExtraLife: number;
+  readonly wrongActionDamage: number;
+  readonly projectileDamage: number;
+  readonly movementZoneStartPercent: number;
+  readonly playerMinXPercent: number;
+  readonly playerMaxXPercent: number;
+  readonly playerStartXPercent: number;
+  readonly keyboardStepPercent: number;
+  readonly projectileBaseDurationMs: number;
+  readonly projectileDurationStepMs: number;
+  readonly projectileDelayStepMs: number;
+  readonly projectileLetterSpacingPercent: number;
+  readonly playerLaneYPercent: number;
+  readonly projectileFallDistancePercent: number;
+  readonly projectileMinImpactProgress: number;
+  readonly projectileMaxImpactProgress: number;
+  readonly projectileMinXPercent: number;
+  readonly projectileMaxXPercent: number;
+  readonly projectileNearDriftPercent: number;
+  readonly projectileFarDriftPercent: number;
+  readonly playerHitRadiusPercent: number;
+  readonly invulnerabilityMs: number;
+  readonly levelCompleteVisibleMs: number;
+  readonly rewardParticleCount: number;
+}
+
 export interface LevelDefinition {
   readonly id: string;
   readonly number: number;
@@ -55,9 +89,11 @@ export interface CreatureResolution {
 
 export interface GameScene {
   readonly level: LevelDefinition;
+  readonly gameplayConfig: GameplayConfig;
   readonly levelIndex: number;
   readonly phase: GamePhase;
   readonly collectedCount: number;
+  readonly correctStreak: number;
   readonly health: number;
   readonly creatures: readonly CreatureViewModel[];
   readonly spawnSequence: number;
