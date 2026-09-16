@@ -9,10 +9,15 @@ import type {
 } from '../../../../../types/gameplay';
 import { applyCreatureAction } from '../../../application/use-cases/applyCreatureAction';
 import { createLetterProjectiles } from '../../../application/use-cases/createLetterProjectiles';
+import { useGameLifecycle } from './useGameLifecycle';
 import { useProjectileDamage } from './useProjectileDamage';
 
 /*** Own mutable React feedback while delegating gameplay decisions to pure application use cases. */
-export function useGameInteraction(initialScene: GameScene, playerXPercent: number) {
+export function useGameInteraction(
+  initialScene: GameScene,
+  playerXPercent: number,
+  resetPlayer: () => void,
+) {
   const [scene, setScene] = useState(initialScene);
   const [shot, setShot] = useState<ShotViewModel | null>(null);
   const [letterProjectiles, setLetterProjectiles] = useState<readonly LetterProjectileSpec[]>([]);
@@ -23,6 +28,16 @@ export function useGameInteraction(initialScene: GameScene, playerXPercent: numb
   const shotTimerRef = useRef<number | null>(null);
   const mistakeTimerRef = useRef<number | null>(null);
   const damage = useProjectileDamage({ playerXPercent, sceneRef, setLetterProjectiles, setScene });
+  const lifecycle = useGameLifecycle({
+    resetInvulnerability: damage.resetInvulnerability,
+    resetPlayer,
+    scene,
+    sceneRef,
+    setLetterProjectiles,
+    setMistakeCreatureId,
+    setScene,
+    setShot,
+  });
   const context: GameInteractionContext = {
     letterSequenceRef,
     mistakeTimerRef,
@@ -40,6 +55,7 @@ export function useGameInteraction(initialScene: GameScene, playerXPercent: numb
 
   return {
     ...damage,
+    ...lifecycle,
     letterProjectiles,
     mistakeCreatureId,
     scene,
@@ -57,9 +73,9 @@ interface GameInteractionContext {
   readonly playerXPercent: number;
   readonly sceneRef: { current: GameScene };
   readonly setLetterProjectiles: Dispatch<SetStateAction<readonly LetterProjectileSpec[]>>;
-  readonly setMistakeCreatureId: (creatureId: string | null) => void;
-  readonly setScene: (scene: GameScene) => void;
-  readonly setShot: (shot: ShotViewModel | null) => void;
+  readonly setMistakeCreatureId: Dispatch<SetStateAction<string | null>>;
+  readonly setScene: Dispatch<SetStateAction<GameScene>>;
+  readonly setShot: Dispatch<SetStateAction<ShotViewModel | null>>;
   readonly shotSequenceRef: { current: number };
   readonly shotTimerRef: { current: number | null };
 }
@@ -70,6 +86,7 @@ function handleCreatureAction(
   action: CreatureAction,
   context: GameInteractionContext,
 ) {
+  if (context.sceneRef.current.phase !== 'playing') return;
   if (action === 'shoot') showShot(creature, context);
 
   const result = applyCreatureAction(context.sceneRef.current, creature.id, action);
