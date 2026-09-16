@@ -1,6 +1,7 @@
 import './gameplay.css';
 import './interaction.css';
 import './lifecycle.css';
+import './resolution.css';
 
 import type { GameScene } from '../../../../../types/gameplay';
 import { GameHeader } from './GameHeader';
