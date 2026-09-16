@@ -1,7 +1,10 @@
 import type { GameScene } from '../../../../types/gameplay';
 
 /*** Apply one letter-projectile hit while respecting the current invulnerability window. */
-export function applyProjectileHit(scene: GameScene, invulnerable: boolean) {
+export function applyProjectileHit(
+  scene: GameScene,
+  invulnerable: boolean,
+): ProjectileHitResult {
   if (scene.phase !== 'playing' || invulnerable) {
     return { scene, damaged: false };
   }
@@ -16,4 +19,9 @@ export function applyProjectileHit(scene: GameScene, invulnerable: boolean) {
     },
     damaged: true,
   };
+}
+
+interface ProjectileHitResult {
+  readonly scene: GameScene;
+  readonly damaged: boolean;
 }
