@@ -5,6 +5,7 @@ import type {
 } from '../../../../../types/gameplay';
 import { CollectRing } from './CollectRing';
 import { useCreatureGesture } from './useCreatureGesture';
+import { WordCreatureLabel } from './WordCreatureLabel';
 
 /*** Render one readable word creature with translated resolution feedback. */
 export function WordCreature({
@@ -31,14 +32,13 @@ export function WordCreature({
   ]
     .filter(Boolean)
     .join(' ');
-  const label = resolution?.translation ?? creature.word.text;
 
   return (
     <button
       type="button"
       className={className}
       style={style}
-      aria-label={label}
+      aria-label={resolution?.translation ?? creature.word.text}
       disabled={disabled}
       {...handlers}
     >
@@ -49,14 +49,7 @@ export function WordCreature({
         <span className="eye" />
         <span className="eye" />
       </span>
-      <span className={resolution === null ? 'word-label' : 'word-label word-label--resolution'}>
-        {label}
-        {resolution === null ? null : (
-          <span className="resolution-marker" aria-hidden="true">
-            {resolution.matchesTarget ? '✅' : '❌'}
-          </span>
-        )}
-      </span>
+      <WordCreatureLabel text={creature.word.text} resolution={resolution} />
       <span className="creature-feet" aria-hidden="true">
         <span />
         <span />
