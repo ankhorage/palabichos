@@ -1,6 +1,7 @@
 .word-creature:disabled {
   opacity: 1;
   cursor: default;
+  pointer-events: none;
 }
 
 .word-creature--resolving {
