@@ -11,5 +11,6 @@ export function createInitialGameScene(): GameScene {
       ...creature,
       matchesTarget: creature.word.categories.includes(FIRST_LEVEL.targetCategory),
     })),
+    spawnSequence: 0,
   };
 }

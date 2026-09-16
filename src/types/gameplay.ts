@@ -1,16 +1,20 @@
-export type WordCategory = 'animals' | 'food' | 'home' | 'transport';
+type WordCategory = 'animals' | 'food' | 'home' | 'transport';
 
-export type CreatureVariant = 'berry' | 'mint' | 'sun' | 'lavender';
+type CreatureVariant = 'berry' | 'mint' | 'sun' | 'lavender';
 
-export type CreatureMotion = 'bob' | 'drift' | 'sway';
+type CreatureMotion = 'bob' | 'drift' | 'sway';
 
-export interface WordEntry {
+export type CreatureAction = 'collect' | 'shoot';
+
+type CreatureActionOutcome = 'collected' | 'destroyed' | 'mistake' | 'ignored';
+
+interface WordEntry {
   readonly id: string;
   readonly text: string;
   readonly categories: readonly WordCategory[];
 }
 
-export interface CreatureSeed {
+interface CreatureSeed {
   readonly id: string;
   readonly word: WordEntry;
   readonly xPercent: number;
@@ -28,6 +32,7 @@ export interface LevelDefinition {
   readonly targetCategory: WordCategory;
   readonly targetCount: number;
   readonly initialCreatures: readonly CreatureSeed[];
+  readonly respawnCreatures: readonly CreatureSeed[];
 }
 
 export interface CreatureViewModel extends CreatureSeed {
@@ -39,4 +44,18 @@ export interface GameScene {
   readonly collectedCount: number;
   readonly health: number;
   readonly creatures: readonly CreatureViewModel[];
+  readonly spawnSequence: number;
+}
+
+export interface CreatureActionResult {
+  readonly scene: GameScene;
+  readonly outcome: CreatureActionOutcome;
+  readonly creatureId: string;
+}
+
+export interface ShotViewModel {
+  readonly id: number;
+  readonly fromXPercent: number;
+  readonly toXPercent: number;
+  readonly toYPercent: number;
 }
