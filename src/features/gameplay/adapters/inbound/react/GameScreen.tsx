@@ -25,6 +25,7 @@ export function GameScreen({ scene }: GameScreenProps) {
         letterProjectiles={interaction.letterProjectiles}
         mistakeCreatureId={interaction.mistakeCreatureId}
         playerXPercent={movement.xPercent}
+        resolution={interaction.resolution}
         movementHandlers={movement.handlers}
         onCreatureAction={interaction.onCreatureAction}
         onLetterProjectileComplete={interaction.onLetterProjectileComplete}
