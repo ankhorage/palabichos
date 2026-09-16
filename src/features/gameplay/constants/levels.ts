@@ -8,6 +8,7 @@ export const GAME_LEVELS = [
     title: 'ANIMALES',
     targetCategory: 'animals',
     targetCount: 20,
+    gameplayConfigId: 'starter',
     initialCreatures: [
       creature('creature-gato', 'gato', 'gato', 'animals', 18, 25, 'mint', 'bob', -1.2, 5.8),
       creature('creature-mesa', 'mesa', 'mesa', 'home', 57, 19, 'berry', 'sway', -2.1, 7.2),
@@ -68,6 +69,7 @@ export const GAME_LEVELS = [
     title: 'COMIDA',
     targetCategory: 'food',
     targetCount: 20,
+    gameplayConfigId: 'starter',
     initialCreatures: [
       creature('creature-pan', 'pan', 'pan', 'food', 20, 26, 'sun', 'bob', -1.1, 6.1),
       creature('creature-perro-2', 'perro', 'perro', 'animals', 58, 20, 'mint', 'sway', -2.2, 7.2),
