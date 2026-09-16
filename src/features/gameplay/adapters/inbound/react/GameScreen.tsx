@@ -11,12 +11,6 @@ import { usePlayerMovement } from './usePlayerMovement';
 export function GameScreen({ scene }: GameScreenProps) {
   const movement = usePlayerMovement();
   const interaction = useGameInteraction(scene, movement.xPercent);
-  const movementHandlers = {
-    onPointerCancel: movement.onPointerCancel,
-    onPointerDown: movement.onPointerDown,
-    onPointerMove: movement.onPointerMove,
-    onPointerUp: movement.onPointerUp,
-  };
 
   return (
     <main className="game-screen" aria-label="Palabichos">
@@ -28,7 +22,7 @@ export function GameScreen({ scene }: GameScreenProps) {
         shot={interaction.shot}
         mistakeCreatureId={interaction.mistakeCreatureId}
         playerXPercent={movement.xPercent}
-        movementHandlers={movementHandlers}
+        movementHandlers={movement.handlers}
         onCreatureAction={interaction.onCreatureAction}
       />
       <footer className="game-footer">

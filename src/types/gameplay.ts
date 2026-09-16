@@ -4,6 +4,8 @@ type CreatureVariant = 'berry' | 'mint' | 'sun' | 'lavender';
 
 type CreatureMotion = 'bob' | 'drift' | 'sway';
 
+type GamePhase = 'playing' | 'level-complete' | 'game-over';
+
 export type CreatureAction = 'collect' | 'shoot';
 
 type CreatureActionOutcome = 'collected' | 'destroyed' | 'mistake' | 'ignored';
@@ -41,6 +43,8 @@ export interface CreatureViewModel extends CreatureSeed {
 
 export interface GameScene {
   readonly level: LevelDefinition;
+  readonly levelIndex: number;
+  readonly phase: GamePhase;
   readonly collectedCount: number;
   readonly health: number;
   readonly creatures: readonly CreatureViewModel[];
