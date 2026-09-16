@@ -10,6 +10,8 @@ type LetterTrajectory = 'far-left' | 'left' | 'center' | 'right' | 'far-right';
 
 export type CreatureAction = 'collect' | 'shoot';
 
+export type GameplayConfigId = 'starter';
+
 type CreatureActionOutcome = 'collected' | 'destroyed' | 'mistake' | 'ignored';
 
 interface WordEntry {
@@ -62,6 +64,9 @@ export interface GameplayConfig {
   readonly invulnerabilityMs: number;
   readonly levelCompleteVisibleMs: number;
   readonly rewardParticleCount: number;
+  readonly hitStopMs: number;
+  readonly playerRespawnDelayMs: number;
+  readonly playerRespawnBlinkMs: number;
 }
 
 export interface LevelDefinition {
@@ -70,6 +75,7 @@ export interface LevelDefinition {
   readonly title: string;
   readonly targetCategory: WordCategory;
   readonly targetCount: number;
+  readonly gameplayConfigId: GameplayConfigId;
   readonly initialCreatures: readonly CreatureSeed[];
   readonly respawnCreatures: readonly CreatureSeed[];
 }
