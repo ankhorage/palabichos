@@ -35,28 +35,36 @@ interface SceneReplacementContext {
 }
 
 /*** Schedule the short success pause before advancing to the next catalog level. */
-function useAutomaticLevelAdvance({ scene, ...context }: GameLifecycleInput) {
+function useAutomaticLevelAdvance({
+  resetInvulnerability,
+  resetPlayer,
+  scene,
+  sceneRef,
+  setLetterProjectiles,
+  setMistakeCreatureId,
+  setScene,
+  setShot,
+}: GameLifecycleInput) {
   const transitionTimerRef = useRef<number | null>(null);
-  const {
-    resetInvulnerability,
-    resetPlayer,
-    sceneRef,
-    setLetterProjectiles,
-    setMistakeCreatureId,
-    setScene,
-    setShot,
-  } = context;
 
   useEffect(() => {
     if (scene.phase !== 'level-complete') return undefined;
 
     transitionTimerRef.current = window.setTimeout(
-      () => replaceScene(advanceGameScene(sceneRef.current), context),
+      () =>
+        replaceScene(advanceGameScene(sceneRef.current), {
+          resetInvulnerability,
+          resetPlayer,
+          sceneRef,
+          setLetterProjectiles,
+          setMistakeCreatureId,
+          setScene,
+          setShot,
+        }),
       LEVEL_COMPLETE_VISIBLE_MS,
     );
     return () => clearTransitionTimer(transitionTimerRef);
   }, [
-    context,
     resetInvulnerability,
     resetPlayer,
     scene.phase,
