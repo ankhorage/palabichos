@@ -128,7 +128,12 @@ function creature(
 ) {
   return {
     id,
-    word: { id: wordId, text, categories: [category] },
+    word: {
+      id: wordId,
+      text,
+      translation: translationForWord(wordId),
+      categories: [category],
+    },
     xPercent,
     yPercent,
     variant,
@@ -136,4 +141,68 @@ function creature(
     animationDelaySeconds,
     animationDurationSeconds,
   } as const;
+}
+
+/*** Resolve the first half of German learning translations in the current level catalog. */
+function translationForWord(wordId: string) {
+  switch (wordId) {
+    case 'gato':
+      return 'Katze';
+    case 'mesa':
+      return 'Tisch';
+    case 'perro':
+      return 'Hund';
+    case 'caballo':
+      return 'Pferd';
+    case 'coche':
+      return 'Auto';
+    case 'pajaro':
+      return 'Vogel';
+    case 'conejo':
+      return 'Kaninchen';
+    case 'silla':
+      return 'Stuhl';
+    case 'pez':
+      return 'Fisch';
+    case 'pan':
+      return 'Brot';
+    case 'tortuga':
+      return 'Schildkröte';
+    case 'tren':
+      return 'Zug';
+    default:
+      return translationForWordFallback(wordId);
+  }
+}
+
+/*** Resolve the remaining German learning translations in the current level catalog. */
+function translationForWordFallback(wordId: string) {
+  switch (wordId) {
+    case 'vaca':
+      return 'Kuh';
+    case 'queso':
+      return 'Käse';
+    case 'pato':
+      return 'Ente';
+    case 'ventana':
+      return 'Fenster';
+    case 'manzana':
+      return 'Apfel';
+    case 'arroz':
+      return 'Reis';
+    case 'sopa':
+      return 'Suppe';
+    case 'huevo':
+      return 'Ei';
+    case 'leche':
+      return 'Milch';
+    case 'pasta':
+      return 'Nudeln';
+    case 'fruta':
+      return 'Obst';
+    case 'puerta':
+      return 'Tür';
+    default:
+      throw new Error(`Missing German translation for ${wordId}.`);
+  }
 }

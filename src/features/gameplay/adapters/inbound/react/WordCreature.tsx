@@ -1,9 +1,20 @@
-import type { CreatureAction, CreatureViewModel } from '../../../../../types/gameplay';
+import type {
+  CreatureAction,
+  CreatureResolution,
+  CreatureViewModel,
+} from '../../../../../types/gameplay';
 import { CollectRing } from './CollectRing';
 import { useCreatureGesture } from './useCreatureGesture';
+import { WordCreatureLabel } from './WordCreatureLabel';
 
-/*** Render one readable word creature with omni-device collect-or-shoot interaction. */
-export function WordCreature({ creature, mistake, onAction }: WordCreatureProps) {
+/*** Render one readable word creature with translated resolution feedback. */
+export function WordCreature({
+  creature,
+  disabled,
+  mistake,
+  onAction,
+  resolution,
+}: WordCreatureProps) {
   const { handlers, holding } = useCreatureGesture(creature, onAction);
   const style = {
     animationDelay: `${creature.animationDelaySeconds}s`,
@@ -16,6 +27,7 @@ export function WordCreature({ creature, mistake, onAction }: WordCreatureProps)
     `word-creature--${creature.variant}`,
     `word-creature--${creature.motion}`,
     holding ? 'word-creature--holding' : '',
+    resolution === null ? '' : 'word-creature--resolving',
     mistake ? 'word-creature--mistake' : '',
   ]
     .filter(Boolean)
@@ -26,17 +38,18 @@ export function WordCreature({ creature, mistake, onAction }: WordCreatureProps)
       type="button"
       className={className}
       style={style}
-      aria-label={creature.word.text}
+      aria-label={resolution?.translation ?? creature.word.text}
+      disabled={disabled}
       {...handlers}
     >
-      <CollectRing active={holding} />
+      <CollectRing active={holding && !disabled} />
       <span className="antenna antenna-left" aria-hidden="true" />
       <span className="antenna antenna-right" aria-hidden="true" />
       <span className="creature-face" aria-hidden="true">
         <span className="eye" />
         <span className="eye" />
       </span>
-      <span className="word-label">{creature.word.text}</span>
+      <WordCreatureLabel text={creature.word.text} resolution={resolution} />
       <span className="creature-feet" aria-hidden="true">
         <span />
         <span />
@@ -47,6 +60,8 @@ export function WordCreature({ creature, mistake, onAction }: WordCreatureProps)
 
 interface WordCreatureProps {
   readonly creature: CreatureViewModel;
+  readonly disabled: boolean;
   readonly mistake: boolean;
   readonly onAction: (creature: CreatureViewModel, action: CreatureAction) => void;
+  readonly resolution: CreatureResolution | null;
 }

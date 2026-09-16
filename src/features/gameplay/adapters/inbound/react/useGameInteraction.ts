@@ -7,8 +7,7 @@ import type {
   LetterProjectileSpec,
   ShotViewModel,
 } from '../../../../../types/gameplay';
-import { applyCreatureAction } from '../../../application/use-cases/applyCreatureAction';
-import { createLetterProjectiles } from '../../../application/use-cases/createLetterProjectiles';
+import { useCreatureResolution } from './useCreatureResolution';
 import { useGameLifecycle } from './useGameLifecycle';
 import { useProjectileDamage } from './useProjectileDamage';
 
@@ -27,6 +26,14 @@ export function useGameInteraction(
     setLetterProjectiles: feedback.setLetterProjectiles,
     setScene,
   });
+  const resolution = useCreatureResolution({
+    letterSequenceRef: runtime.letterSequenceRef,
+    mistakeTimerRef: runtime.mistakeTimerRef,
+    sceneRef: runtime.sceneRef,
+    setLetterProjectiles: feedback.setLetterProjectiles,
+    setMistakeCreatureId: feedback.setMistakeCreatureId,
+    setScene,
+  });
   const lifecycle = useGameLifecycle({
     resetInvulnerability: damage.resetInvulnerability,
     resetPlayer,
@@ -37,18 +44,14 @@ export function useGameInteraction(
     setScene,
     setShot: feedback.setShot,
   });
-  const context = createInteractionContext({
-    feedback,
-    playerXPercent,
-    runtime,
-    setScene,
-  });
+  const context = createInteractionContext({ feedback, playerXPercent, resolution, runtime });
 
   return {
     ...damage,
     ...lifecycle,
     letterProjectiles: feedback.letterProjectiles,
     mistakeCreatureId: feedback.mistakeCreatureId,
+    resolution: resolution.resolution,
     scene,
     shot: feedback.shot,
     onCreatureAction: (creature: CreatureViewModel, action: CreatureAction) =>
@@ -59,13 +62,12 @@ export function useGameInteraction(
 }
 
 interface GameInteractionContext {
-  readonly letterSequenceRef: { current: number };
-  readonly mistakeTimerRef: { current: number | null };
+  readonly beginCreatureResolution: (
+    creature: CreatureViewModel,
+    action: CreatureAction,
+  ) => boolean;
   readonly playerXPercent: number;
   readonly sceneRef: { current: GameScene };
-  readonly setLetterProjectiles: Dispatch<SetStateAction<readonly LetterProjectileSpec[]>>;
-  readonly setMistakeCreatureId: Dispatch<SetStateAction<string | null>>;
-  readonly setScene: Dispatch<SetStateAction<GameScene>>;
   readonly setShot: Dispatch<SetStateAction<ShotViewModel | null>>;
   readonly shotSequenceRef: { current: number };
   readonly shotTimerRef: { current: number | null };
@@ -86,6 +88,13 @@ interface TransientFeedbackState {
   readonly setMistakeCreatureId: Dispatch<SetStateAction<string | null>>;
   readonly setShot: Dispatch<SetStateAction<ShotViewModel | null>>;
   readonly shot: ShotViewModel | null;
+}
+
+interface CreatureResolutionBinding {
+  readonly beginCreatureResolution: (
+    creature: CreatureViewModel,
+    action: CreatureAction,
+  ) => boolean;
 }
 
 /*** Own browser refs and feedback timer cleanup separately from interaction orchestration. */
@@ -120,17 +129,13 @@ function useTransientFeedbackState(): TransientFeedbackState {
 function createInteractionContext({
   feedback,
   playerXPercent,
+  resolution,
   runtime,
-  setScene,
 }: CreateInteractionContextInput): GameInteractionContext {
   return {
-    letterSequenceRef: runtime.letterSequenceRef,
-    mistakeTimerRef: runtime.mistakeTimerRef,
+    beginCreatureResolution: resolution.beginCreatureResolution,
     playerXPercent,
     sceneRef: runtime.sceneRef,
-    setLetterProjectiles: feedback.setLetterProjectiles,
-    setMistakeCreatureId: feedback.setMistakeCreatureId,
-    setScene,
     setShot: feedback.setShot,
     shotSequenceRef: runtime.shotSequenceRef,
     shotTimerRef: runtime.shotTimerRef,
@@ -140,31 +145,18 @@ function createInteractionContext({
 interface CreateInteractionContextInput {
   readonly feedback: TransientFeedbackState;
   readonly playerXPercent: number;
+  readonly resolution: CreatureResolutionBinding;
   readonly runtime: InteractionRuntime;
-  readonly setScene: Dispatch<SetStateAction<GameScene>>;
 }
 
-/*** Apply a creature action and schedule short-lived shot, projectile, or mistake feedback. */
+/*** Start one translated creature resolution and show an immediate shot trail when applicable. */
 function handleCreatureAction(
   creature: CreatureViewModel,
   action: CreatureAction,
   context: GameInteractionContext,
 ) {
-  if (context.sceneRef.current.phase !== 'playing') return;
+  if (!context.beginCreatureResolution(creature, action)) return;
   if (action === 'shoot') showShot(creature, context);
-
-  const result = applyCreatureAction(context.sceneRef.current, creature.id, action);
-  context.sceneRef.current = result.scene;
-  context.setScene(result.scene);
-  if (result.outcome === 'destroyed') emitLetterProjectiles(creature, context);
-  if (result.outcome === 'mistake') showMistake(creature.id, context);
-}
-
-/*** Emit one deterministic falling projectile per displayed letter. */
-function emitLetterProjectiles(creature: CreatureViewModel, context: GameInteractionContext) {
-  context.letterSequenceRef.current += 1;
-  const projectiles = createLetterProjectiles(creature, context.letterSequenceRef.current);
-  context.setLetterProjectiles((current) => [...current, ...projectiles]);
 }
 
 /*** Remove one completed falling letter from React presentation state. */
@@ -188,16 +180,6 @@ function showShot(creature: CreatureViewModel, context: GameInteractionContext) 
   context.shotTimerRef.current = window.setTimeout(() => context.setShot(null), SHOT_VISIBLE_MS);
 }
 
-/*** Mark the incorrectly handled creature briefly and then clear its feedback state. */
-function showMistake(creatureId: string, context: GameInteractionContext) {
-  context.setMistakeCreatureId(creatureId);
-  clearTimer(context.mistakeTimerRef);
-  context.mistakeTimerRef.current = window.setTimeout(
-    () => context.setMistakeCreatureId(null),
-    MISTAKE_VISIBLE_MS,
-  );
-}
-
 /*** Clear the browser feedback timers when the interaction adapter unmounts. */
 function clearFeedbackTimers(
   shotTimerRef: { current: number | null },
@@ -215,4 +197,3 @@ function clearTimer(timerRef: { current: number | null }) {
 }
 
 const SHOT_VISIBLE_MS = 220;
-const MISTAKE_VISIBLE_MS = 420;

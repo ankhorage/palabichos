@@ -1,11 +1,11 @@
 import type { CreatureViewModel, LetterProjectileSpec } from '../../../../types/gameplay';
 
-/*** Split one destroyed word into deterministic readable letter projectile specifications. */
+/*** Split one destroyed word translation into deterministic readable letter projectile specifications. */
 export function createLetterProjectiles(
   creature: CreatureViewModel,
   sequence: number,
 ): readonly LetterProjectileSpec[] {
-  const letters = Array.from(creature.word.text);
+  const letters = Array.from(creature.word.translation);
   const centerOffset = (letters.length - 1) / 2;
 
   return letters.map((letter, index) => {

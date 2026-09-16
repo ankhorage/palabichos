@@ -2,16 +2,17 @@ import type { PointerEventHandler } from 'react';
 
 import type {
   CreatureAction,
+  CreatureResolution,
   CreatureViewModel,
   GameScene,
   LetterProjectileSpec,
   ShotViewModel,
 } from '../../../../../types/gameplay';
+import { CreatureField } from './CreatureField';
 import { GamePhaseOverlay } from './GamePhaseOverlay';
 import { LetterProjectile } from './LetterProjectile';
 import { PlayerCharacter } from './PlayerCharacter';
 import { ShotTrail } from './ShotTrail';
-import { WordCreature } from './WordCreature';
 
 /*** Render the interactive creature field, dodge band, projectiles, and player. */
 export function GamePlayfield({
@@ -24,6 +25,7 @@ export function GamePlayfield({
   onLetterProjectileCrossPlayerLane,
   onRestart,
   playerXPercent,
+  resolution,
   scene,
   shot,
 }: GamePlayfieldProps) {
@@ -37,14 +39,13 @@ export function GamePlayfield({
       <div className="moon" aria-hidden="true" />
       <div className="hill hill-back" aria-hidden="true" />
       <div className="hill hill-front" aria-hidden="true" />
-      {scene.creatures.map((creature) => (
-        <WordCreature
-          key={creature.id}
-          creature={creature}
-          mistake={mistakeCreatureId === creature.id}
-          onAction={onCreatureAction}
-        />
-      ))}
+      <CreatureField
+        creatures={scene.creatures}
+        disabled={resolution !== null || scene.phase !== 'playing'}
+        mistakeCreatureId={mistakeCreatureId}
+        resolution={resolution}
+        onCreatureAction={onCreatureAction}
+      />
       {letterProjectiles.map((projectile) => (
         <LetterProjectile
           key={projectile.id}
@@ -77,6 +78,7 @@ interface GamePlayfieldProps {
   ) => void;
   readonly onRestart: () => void;
   readonly playerXPercent: number;
+  readonly resolution: CreatureResolution | null;
   readonly scene: GameScene;
   readonly shot: ShotViewModel | null;
 }

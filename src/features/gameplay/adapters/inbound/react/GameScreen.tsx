@@ -1,6 +1,7 @@
 import './gameplay.css';
 import './interaction.css';
 import './lifecycle.css';
+import './resolution.css';
 
 import type { GameScene } from '../../../../../types/gameplay';
 import { GameHeader } from './GameHeader';
@@ -25,6 +26,7 @@ export function GameScreen({ scene }: GameScreenProps) {
         letterProjectiles={interaction.letterProjectiles}
         mistakeCreatureId={interaction.mistakeCreatureId}
         playerXPercent={movement.xPercent}
+        resolution={interaction.resolution}
         movementHandlers={movement.handlers}
         onCreatureAction={interaction.onCreatureAction}
         onLetterProjectileComplete={interaction.onLetterProjectileComplete}
