@@ -1,14 +1,22 @@
-import { type PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react';
+import {
+  type PointerEvent as ReactPointerEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 /*** Bind touch, mouse, trackpad, and keyboard input to calm horizontal player movement. */
 export function usePlayerMovement(enabled = true) {
-  const [xPercent, setXPercent] = useState(50);
+  const [xPercent, setXPercent] = useState(PLAYER_START_X_PERCENT);
   const pointerIdRef = useRef<number | null>(null);
   const context: PlayerMovementContext = { pointerIdRef, setXPercent };
+  const reset = useCallback(() => setXPercent(PLAYER_START_X_PERCENT), []);
 
   useEffect(() => bindKeyboardMovement(enabled, setXPercent), [enabled]);
 
   return {
+    reset,
     xPercent,
     handlers: {
       onPointerCancel: (event: ReactPointerEvent<HTMLElement>) => finishMovement(event, context),
@@ -112,4 +120,5 @@ function clampPlayerX(xPercent: number) {
 const MOVEMENT_ZONE_START_PERCENT = 65;
 const PLAYER_MIN_X_PERCENT = 9;
 const PLAYER_MAX_X_PERCENT = 91;
+const PLAYER_START_X_PERCENT = 50;
 const KEYBOARD_STEP_PERCENT = 5;
