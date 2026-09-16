@@ -23,6 +23,7 @@ export function GamePlayfield({
     <section
       className="playfield"
       aria-label={`Categoría ${scene.level.title}`}
+      onContextMenu={(event) => event.preventDefault()}
       {...movementHandlers}
     >
       <div className="moon" aria-hidden="true" />

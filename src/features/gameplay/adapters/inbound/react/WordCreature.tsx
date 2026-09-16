@@ -4,7 +4,7 @@ import { useCreatureGesture } from './useCreatureGesture';
 
 /*** Render one readable word creature with omni-device collect-or-shoot interaction. */
 export function WordCreature({ creature, mistake, onAction }: WordCreatureProps) {
-  const gesture = useCreatureGesture(creature, onAction);
+  const { handlers, holding } = useCreatureGesture(creature, onAction);
   const style = {
     animationDelay: `${creature.animationDelaySeconds}s`,
     animationDuration: `${creature.animationDurationSeconds}s`,
@@ -15,7 +15,7 @@ export function WordCreature({ creature, mistake, onAction }: WordCreatureProps)
     'word-creature',
     `word-creature--${creature.variant}`,
     `word-creature--${creature.motion}`,
-    gesture.holding ? 'word-creature--holding' : '',
+    holding ? 'word-creature--holding' : '',
     mistake ? 'word-creature--mistake' : '',
   ]
     .filter(Boolean)
@@ -27,9 +27,9 @@ export function WordCreature({ creature, mistake, onAction }: WordCreatureProps)
       className={className}
       style={style}
       aria-label={creature.word.text}
-      {...gesture}
+      {...handlers}
     >
-      <CollectRing active={gesture.holding} />
+      <CollectRing active={holding} />
       <span className="antenna antenna-left" aria-hidden="true" />
       <span className="antenna antenna-right" aria-hidden="true" />
       <span className="creature-face" aria-hidden="true">
