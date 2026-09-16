@@ -17,7 +17,7 @@ export function applyCreatureAction(
   if (creature === undefined) return ignoredResult(scene, creatureId);
 
   const isCorrect = action === 'collect' ? creature.matchesTarget : !creature.matchesTarget;
-  if (!isCorrect) return mistakeResult(scene, creatureId);
+  if (!isCorrect) return mistakeResult(scene, creature, action);
 
   return correctResult(scene, creature, action);
 }
@@ -27,9 +27,14 @@ function ignoredResult(scene: GameScene, creatureId: string): CreatureActionResu
   return { scene, outcome: 'ignored', creatureId };
 }
 
-/*** Apply one incorrect word decision and enter game over when health reaches zero. */
-function mistakeResult(scene: GameScene, creatureId: string): CreatureActionResult {
+/*** Penalize one wrong decision while still physically destroying a wrongly shot word. */
+function mistakeResult(
+  scene: GameScene,
+  creature: CreatureViewModel,
+  action: CreatureAction,
+): CreatureActionResult {
   const health = Math.max(0, scene.health - scene.gameplayConfig.wrongActionDamage);
+  const shotReplacement = action === 'shoot' ? createReplacementCreature(scene) : null;
 
   return {
     scene: {
@@ -37,9 +42,16 @@ function mistakeResult(scene: GameScene, creatureId: string): CreatureActionResu
       correctStreak: 0,
       health,
       phase: health === 0 ? 'game-over' : scene.phase,
+      creatures:
+        shotReplacement === null
+          ? scene.creatures
+          : scene.creatures.map((candidate) =>
+              candidate.id === creature.id ? shotReplacement : candidate,
+            ),
+      spawnSequence: scene.spawnSequence + (shotReplacement === null ? 0 : 1),
     },
     outcome: 'mistake',
-    creatureId,
+    creatureId: creature.id,
   };
 }
 
