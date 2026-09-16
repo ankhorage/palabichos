@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
-import { createInitialGameScene } from './createInitialGameScene';
 import { createCreatureResolution } from './createCreatureResolution';
+import { createInitialGameScene } from './createInitialGameScene';
 
 describe('createCreatureResolution', () => {
   test('reports semantic truth independently from the chosen action', () => {
