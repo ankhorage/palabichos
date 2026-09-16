@@ -17,7 +17,8 @@
     "noUnusedParameters": true,
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "types": ["bun", "vite/client"]
   },
   "include": ["src", "vite.config.ts", "knip.config.ts"]
 }
