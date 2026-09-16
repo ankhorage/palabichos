@@ -1,20 +1,20 @@
-export type WordCategory = 'animals' | 'food' | 'home' | 'transport';
+type WordCategory = 'animals' | 'food' | 'home' | 'transport';
 
-export type CreatureVariant = 'berry' | 'mint' | 'sun' | 'lavender';
+type CreatureVariant = 'berry' | 'mint' | 'sun' | 'lavender';
 
-export type CreatureMotion = 'bob' | 'drift' | 'sway';
+type CreatureMotion = 'bob' | 'drift' | 'sway';
 
 export type CreatureAction = 'collect' | 'shoot';
 
-export type CreatureActionOutcome = 'collected' | 'destroyed' | 'mistake' | 'ignored';
+type CreatureActionOutcome = 'collected' | 'destroyed' | 'mistake' | 'ignored';
 
-export interface WordEntry {
+interface WordEntry {
   readonly id: string;
   readonly text: string;
   readonly categories: readonly WordCategory[];
 }
 
-export interface CreatureSeed {
+interface CreatureSeed {
   readonly id: string;
   readonly word: WordEntry;
   readonly xPercent: number;
