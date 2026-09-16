@@ -28,6 +28,11 @@ export function useProjectileDamage({
   }, [playerXPercent]);
   useEffect(() => () => clearInvulnerabilityTimer(timerRef), []);
 
+  const resetInvulnerability = useCallback(() => {
+    invulnerableRef.current = false;
+    clearInvulnerabilityTimer(timerRef);
+    setInvulnerable(false);
+  }, []);
   const onLetterProjectileCrossPlayerLane = useCallback(
     (projectileId: string, impactXPercent: number) => {
       if (Math.abs(impactXPercent - playerXRef.current) > PLAYER_HIT_RADIUS_PERCENT) return;
@@ -45,7 +50,7 @@ export function useProjectileDamage({
     [sceneRef, setLetterProjectiles, setScene],
   );
 
-  return { invulnerable, onLetterProjectileCrossPlayerLane };
+  return { invulnerable, onLetterProjectileCrossPlayerLane, resetInvulnerability };
 }
 
 interface ProjectileDamageInput {
