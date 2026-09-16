@@ -62,7 +62,10 @@ export function useGameInteraction(
 }
 
 interface GameInteractionContext {
-  readonly beginCreatureResolution: (creature: CreatureViewModel, action: CreatureAction) => boolean;
+  readonly beginCreatureResolution: (
+    creature: CreatureViewModel,
+    action: CreatureAction,
+  ) => boolean;
   readonly playerXPercent: number;
   readonly sceneRef: { current: GameScene };
   readonly setShot: Dispatch<SetStateAction<ShotViewModel | null>>;
@@ -88,7 +91,10 @@ interface TransientFeedbackState {
 }
 
 interface CreatureResolutionBinding {
-  readonly beginCreatureResolution: (creature: CreatureViewModel, action: CreatureAction) => boolean;
+  readonly beginCreatureResolution: (
+    creature: CreatureViewModel,
+    action: CreatureAction,
+  ) => boolean;
 }
 
 /*** Own browser refs and feedback timer cleanup separately from interaction orchestration. */
