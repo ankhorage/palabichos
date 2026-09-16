@@ -43,4 +43,20 @@ describe('applyCreatureAction', () => {
     expect(afterShot.creatures.some((creature) => creature.word.text === 'conejo')).toBe(true);
     expect(afterShot.creatures.some((creature) => creature.word.text === 'silla')).toBe(true);
   });
+
+  test('completes the level on the twentieth matching collect', () => {
+    const scene = { ...createInitialGameScene(), collectedCount: 19 };
+    const result = applyCreatureAction(scene, 'creature-gato', 'collect');
+
+    expect(result.scene.collectedCount).toBe(20);
+    expect(result.scene.phase).toBe('level-complete');
+  });
+
+  test('enters game over when a wrong action consumes the last health', () => {
+    const scene = { ...createInitialGameScene(), health: 1 };
+    const result = applyCreatureAction(scene, 'creature-gato', 'shoot');
+
+    expect(result.scene.health).toBe(0);
+    expect(result.scene.phase).toBe('game-over');
+  });
 });

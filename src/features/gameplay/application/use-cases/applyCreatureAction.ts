@@ -11,45 +11,62 @@ export function applyCreatureAction(
   creatureId: string,
   action: CreatureAction,
 ): CreatureActionResult {
-  const creature = scene.creatures.find((candidate) => candidate.id === creatureId);
+  if (scene.phase !== 'playing') return ignoredResult(scene, creatureId);
 
-  if (creature === undefined) {
-    return {
-      scene,
-      outcome: 'ignored',
-      creatureId,
-    };
-  }
+  const creature = scene.creatures.find((candidate) => candidate.id === creatureId);
+  if (creature === undefined) return ignoredResult(scene, creatureId);
 
   const isCorrect = action === 'collect' ? creature.matchesTarget : !creature.matchesTarget;
+  if (!isCorrect) return mistakeResult(scene, creatureId);
 
-  if (!isCorrect) {
-    return {
-      scene: {
-        ...scene,
-        health: Math.max(0, scene.health - 1),
-      },
-      outcome: 'mistake',
-      creatureId,
-    };
-  }
+  return correctResult(scene, creature, action);
+}
 
+/*** Keep a non-actionable scene unchanged. */
+function ignoredResult(scene: GameScene, creatureId: string): CreatureActionResult {
+  return { scene, outcome: 'ignored', creatureId };
+}
+
+/*** Apply one incorrect word decision and enter game over when health reaches zero. */
+function mistakeResult(scene: GameScene, creatureId: string): CreatureActionResult {
+  const health = Math.max(0, scene.health - 1);
+
+  return {
+    scene: {
+      ...scene,
+      health,
+      phase: health === 0 ? 'game-over' : scene.phase,
+    },
+    outcome: 'mistake',
+    creatureId,
+  };
+}
+
+/*** Apply one correct word decision, progress collection, and complete the level at its target. */
+function correctResult(
+  scene: GameScene,
+  creature: CreatureViewModel,
+  action: CreatureAction,
+): CreatureActionResult {
+  const collectedCount =
+    action === 'collect'
+      ? Math.min(scene.level.targetCount, scene.collectedCount + 1)
+      : scene.collectedCount;
+  const phase = collectedCount >= scene.level.targetCount ? 'level-complete' : scene.phase;
   const replacement = createReplacementCreature(scene);
 
   return {
     scene: {
       ...scene,
-      collectedCount:
-        action === 'collect'
-          ? Math.min(scene.level.targetCount, scene.collectedCount + 1)
-          : scene.collectedCount,
+      collectedCount,
+      phase,
       creatures: scene.creatures.map((candidate) =>
-        candidate.id === creatureId ? replacement : candidate,
+        candidate.id === creature.id ? replacement : candidate,
       ),
       spawnSequence: scene.spawnSequence + 1,
     },
     outcome: action === 'collect' ? 'collected' : 'destroyed',
-    creatureId,
+    creatureId: creature.id,
   };
 }
 

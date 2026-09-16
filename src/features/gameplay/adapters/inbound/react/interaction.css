@@ -83,13 +83,53 @@
   filter: drop-shadow(0 0 3px rgba(176, 210, 255, 0.95));
 }
 
+.letter-projectile {
+  position: absolute;
+  z-index: 7;
+  display: grid;
+  place-items: center;
+  width: 1.35em;
+  height: 1.35em;
+  color: #f8fbff;
+  font-size: clamp(18px, 5vw, 28px);
+  font-weight: 900;
+  line-height: 1;
+  text-shadow:
+    0 2px 8px rgba(10, 16, 35, 0.72),
+    0 0 10px rgba(203, 226, 255, 0.38);
+  pointer-events: none;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+  will-change: transform;
+}
+
+.letter-projectile--far-left {
+  animation-name: letter-fall-far-left;
+}
+
+.letter-projectile--left {
+  animation-name: letter-fall-left;
+}
+
+.letter-projectile--center {
+  animation-name: letter-fall-center;
+}
+
+.letter-projectile--right {
+  animation-name: letter-fall-right;
+}
+
+.letter-projectile--far-right {
+  animation-name: letter-fall-far-right;
+}
+
 .movement-zone {
   position: absolute;
   z-index: 2;
   right: 4%;
   bottom: 0;
   left: 4%;
-  height: 25%;
+  height: 35%;
   border-top: 1px solid rgba(182, 255, 195, 0.08);
   background: linear-gradient(180deg, transparent, rgba(65, 160, 112, 0.055));
   pointer-events: none;
@@ -114,6 +154,11 @@
   pointer-events: none;
 }
 
+.player--invulnerable {
+  animation: player-invulnerable 220ms ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 9px rgba(210, 236, 255, 0.52));
+}
+
 @keyframes collect-ring-progress {
   to {
     stroke-dashoffset: 0;
@@ -129,6 +174,45 @@
   }
   100% {
     opacity: 0;
+  }
+}
+
+@keyframes letter-fall-far-left {
+  to {
+    transform: translate(-14vw, 110dvh) rotate(-18deg);
+  }
+}
+
+@keyframes letter-fall-left {
+  to {
+    transform: translate(-7vw, 110dvh) rotate(-9deg);
+  }
+}
+
+@keyframes letter-fall-center {
+  to {
+    transform: translate(0, 110dvh) rotate(6deg);
+  }
+}
+
+@keyframes letter-fall-right {
+  to {
+    transform: translate(7vw, 110dvh) rotate(12deg);
+  }
+}
+
+@keyframes letter-fall-far-right {
+  to {
+    transform: translate(14vw, 110dvh) rotate(20deg);
+  }
+}
+
+@keyframes player-invulnerable {
+  from {
+    opacity: 0.48;
+  }
+  to {
+    opacity: 1;
   }
 }
 
@@ -153,6 +237,7 @@
     animation-duration: 1ms !important;
   }
 
+  .player--invulnerable,
   .shot-line,
   .word-creature--mistake {
     animation: none;

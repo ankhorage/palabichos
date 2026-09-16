@@ -4,17 +4,25 @@ import type {
   CreatureAction,
   CreatureViewModel,
   GameScene,
+  LetterProjectileSpec,
   ShotViewModel,
 } from '../../../../../types/gameplay';
+import { GamePhaseOverlay } from './GamePhaseOverlay';
+import { LetterProjectile } from './LetterProjectile';
 import { PlayerCharacter } from './PlayerCharacter';
 import { ShotTrail } from './ShotTrail';
 import { WordCreature } from './WordCreature';
 
-/*** Render the interactive creature field, movement band, projectile, and player. */
+/*** Render the interactive creature field, dodge band, projectiles, and player. */
 export function GamePlayfield({
+  invulnerable,
+  letterProjectiles,
   mistakeCreatureId,
   movementHandlers,
   onCreatureAction,
+  onLetterProjectileComplete,
+  onLetterProjectileCrossPlayerLane,
+  onRestart,
   playerXPercent,
   scene,
   shot,
@@ -37,20 +45,37 @@ export function GamePlayfield({
           onAction={onCreatureAction}
         />
       ))}
+      {letterProjectiles.map((projectile) => (
+        <LetterProjectile
+          key={projectile.id}
+          projectile={projectile}
+          onComplete={onLetterProjectileComplete}
+          onCrossPlayerLane={onLetterProjectileCrossPlayerLane}
+        />
+      ))}
       {shot === null ? null : <ShotTrail key={shot.id} shot={shot} />}
       <div className="movement-zone" aria-hidden="true">
         <span>mueve</span>
       </div>
       <div className="baseline" aria-hidden="true" />
-      <PlayerCharacter xPercent={playerXPercent} />
+      <PlayerCharacter xPercent={playerXPercent} invulnerable={invulnerable} />
+      <GamePhaseOverlay scene={scene} onRestart={onRestart} />
     </section>
   );
 }
 
 interface GamePlayfieldProps {
+  readonly invulnerable: boolean;
+  readonly letterProjectiles: readonly LetterProjectileSpec[];
   readonly mistakeCreatureId: string | null;
   readonly movementHandlers: MovementHandlers;
   readonly onCreatureAction: (creature: CreatureViewModel, action: CreatureAction) => void;
+  readonly onLetterProjectileComplete: (projectileId: string) => void;
+  readonly onLetterProjectileCrossPlayerLane: (
+    projectileId: string,
+    impactXPercent: number,
+  ) => void;
+  readonly onRestart: () => void;
   readonly playerXPercent: number;
   readonly scene: GameScene;
   readonly shot: ShotViewModel | null;
