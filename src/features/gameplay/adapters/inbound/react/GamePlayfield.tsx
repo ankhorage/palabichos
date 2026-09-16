@@ -7,6 +7,7 @@ import type {
   LetterProjectileSpec,
   ShotViewModel,
 } from '../../../../../types/gameplay';
+import { GamePhaseOverlay } from './GamePhaseOverlay';
 import { LetterProjectile } from './LetterProjectile';
 import { PlayerCharacter } from './PlayerCharacter';
 import { ShotTrail } from './ShotTrail';
@@ -21,6 +22,7 @@ export function GamePlayfield({
   onCreatureAction,
   onLetterProjectileComplete,
   onLetterProjectileCrossPlayerLane,
+  onRestart,
   playerXPercent,
   scene,
   shot,
@@ -57,6 +59,7 @@ export function GamePlayfield({
       </div>
       <div className="baseline" aria-hidden="true" />
       <PlayerCharacter xPercent={playerXPercent} invulnerable={invulnerable} />
+      <GamePhaseOverlay scene={scene} onRestart={onRestart} />
     </section>
   );
 }
@@ -72,6 +75,7 @@ interface GamePlayfieldProps {
     projectileId: string,
     impactXPercent: number,
   ) => void;
+  readonly onRestart: () => void;
   readonly playerXPercent: number;
   readonly scene: GameScene;
   readonly shot: ShotViewModel | null;
