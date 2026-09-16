@@ -69,7 +69,11 @@ function beginCreatureResolution(
   }
 
   context.resolutionSequenceRef.current += 1;
-  const resolution = createCreatureResolution(creature, action, context.resolutionSequenceRef.current);
+  const resolution = createCreatureResolution(
+    creature,
+    action,
+    context.resolutionSequenceRef.current,
+  );
   context.resolutionRef.current = resolution;
   context.setResolution(resolution);
   clearTimer(context.timerRef);
