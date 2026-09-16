@@ -29,9 +29,6 @@ interface CreatureFieldProps {
   readonly creatures: readonly CreatureViewModel[];
   readonly disabled: boolean;
   readonly mistakeCreatureId: string | null;
-  readonly onCreatureAction: (
-    creature: CreatureViewModel,
-    action: CreatureAction,
-  ) => void;
+  readonly onCreatureAction: (creature: CreatureViewModel, action: CreatureAction) => void;
   readonly resolution: CreatureResolution | null;
 }
