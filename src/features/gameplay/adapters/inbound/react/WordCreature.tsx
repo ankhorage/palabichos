@@ -2,6 +2,7 @@ import type {
   CreatureAction,
   CreatureResolution,
   CreatureViewModel,
+  GameplayConfig,
 } from '../../../../../types/gameplay';
 import { CollectRing } from './CollectRing';
 import { useCreatureGesture } from './useCreatureGesture';
@@ -11,11 +12,12 @@ import { WordCreatureLabel } from './WordCreatureLabel';
 export function WordCreature({
   creature,
   disabled,
+  gameplayConfig,
   mistake,
   onAction,
   resolution,
 }: WordCreatureProps) {
-  const { handlers, holding } = useCreatureGesture(creature, onAction);
+  const { handlers, holding } = useCreatureGesture(creature, onAction, gameplayConfig);
   const style = {
     animationDelay: `${creature.animationDelaySeconds}s`,
     animationDuration: `${creature.animationDurationSeconds}s`,
@@ -28,6 +30,8 @@ export function WordCreature({
     `word-creature--${creature.motion}`,
     holding ? 'word-creature--holding' : '',
     resolution === null ? '' : 'word-creature--resolving',
+    resolution?.isCorrect === true ? 'word-creature--reward' : '',
+    resolution?.isCorrect === false ? 'word-creature--resolution-mistake' : '',
     mistake ? 'word-creature--mistake' : '',
   ]
     .filter(Boolean)
@@ -49,7 +53,11 @@ export function WordCreature({
         <span className="eye" />
         <span className="eye" />
       </span>
-      <WordCreatureLabel text={creature.word.text} resolution={resolution} />
+      <WordCreatureLabel
+        text={creature.word.text}
+        resolution={resolution}
+        rewardParticleCount={gameplayConfig.rewardParticleCount}
+      />
       <span className="creature-feet" aria-hidden="true">
         <span />
         <span />
@@ -61,6 +69,7 @@ export function WordCreature({
 interface WordCreatureProps {
   readonly creature: CreatureViewModel;
   readonly disabled: boolean;
+  readonly gameplayConfig: GameplayConfig;
   readonly mistake: boolean;
   readonly onAction: (creature: CreatureViewModel, action: CreatureAction) => void;
   readonly resolution: CreatureResolution | null;
