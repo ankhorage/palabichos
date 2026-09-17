@@ -5,46 +5,33 @@ import { applyCreatureAction } from './applyCreatureAction';
 import { createGameScene } from './createGameScene';
 
 describe('applyCreatureAction correctness', () => {
-  test('collects a target and records it for Vocab', () => {
+  test('shoots a target, advances progress, and records it for Vocab', () => {
     const scene = createGameScene('animals');
     const creature = requireCreature(scene, true);
-    const result = applyCreatureAction(scene, creature.id, 'collect');
+    const result = applyCreatureAction(scene, creature.id);
 
-    expect(result.outcome).toBe('collected');
+    expect(result.outcome).toBe('destroyed');
     expect(result.scene.collectedCount).toBe(1);
     expect(result.scene.correctStreak).toBe(1);
+    expect(result.scene.health).toBe(scene.health);
     expect(result.vocabWord?.id).toBe(creature.word.id);
   });
 
-  test('shoots a distractor and records it for Vocab', () => {
-    const scene = createGameScene('animals');
+  test('shooting a distractor loses health, resets streak, and does not capture Vocab', () => {
+    const scene = { ...createGameScene('animals'), correctStreak: 4 };
     const creature = requireCreature(scene, false);
-    const result = applyCreatureAction(scene, creature.id, 'shoot');
+    const result = applyCreatureAction(scene, creature.id);
 
     expect(result.outcome).toBe('destroyed');
     expect(result.scene.collectedCount).toBe(0);
-    expect(result.scene.correctStreak).toBe(1);
-    expect(result.vocabWord?.id).toBe(creature.word.id);
-  });
-
-  test('wrong actions lose health, reset streak, and do not capture Vocab', () => {
-    const targetScene = { ...createGameScene('animals'), correctStreak: 4 };
-    const target = requireCreature(targetScene, true);
-    const targetResult = applyCreatureAction(targetScene, target.id, 'shoot');
-    const distractorScene = { ...createGameScene('animals'), correctStreak: 4 };
-    const distractor = requireCreature(distractorScene, false);
-    const distractorResult = applyCreatureAction(distractorScene, distractor.id, 'collect');
-
-    expect(targetResult.scene.health).toBe(4);
-    expect(targetResult.scene.correctStreak).toBe(0);
-    expect(targetResult.vocabWord).toBeNull();
-    expect(distractorResult.scene.health).toBe(4);
-    expect(distractorResult.vocabWord).toBeNull();
+    expect(result.scene.health).toBe(4);
+    expect(result.scene.correctStreak).toBe(0);
+    expect(result.vocabWord).toBeNull();
   });
 });
 
 describe('applyCreatureAction round progression', () => {
-  test('completes a round without reusing any word id', () => {
+  test('completes a round by shooting targets without reusing any word id', () => {
     const completed = playCorrectly(createGameScene('animals'));
 
     expect(completed.phase).toBe('level-complete');
@@ -60,7 +47,7 @@ describe('applyCreatureAction round progression', () => {
       health: 4,
     };
     const creature = requireCreature(scene, true);
-    const result = applyCreatureAction(scene, creature.id, 'collect');
+    const result = applyCreatureAction(scene, creature.id);
 
     expect(result.scene.correctStreak).toBe(0);
     expect(result.scene.health).toBe(5);
@@ -69,10 +56,9 @@ describe('applyCreatureAction round progression', () => {
 
 function playCorrectly(scene: GameScene): GameScene {
   if (scene.phase !== 'playing') return scene;
-  const [creature] = scene.creatures;
-  if (creature === undefined) throw new Error('Expected active creature during test round.');
-  const action = creature.matchesTarget ? 'collect' : 'shoot';
-  return playCorrectly(applyCreatureAction(scene, creature.id, action).scene);
+  const creature = scene.creatures.find((candidate) => candidate.matchesTarget);
+  if (creature === undefined) throw new Error('Expected target creature during test round.');
+  return playCorrectly(applyCreatureAction(scene, creature.id).scene);
 }
 
 function requireCreature(scene: GameScene, matchesTarget: boolean): CreatureViewModel {
