@@ -21,7 +21,6 @@ export function GamePlayfield({
   hitStopped,
   invulnerable,
   letterProjectiles,
-  mistakeCreatureId,
   movementHandlers,
   onCreatureAction,
   onLetterProjectileComplete,
@@ -50,7 +49,6 @@ export function GamePlayfield({
         creatures={scene.creatures}
         disabled={resolution !== null || scene.phase !== 'playing' || hitStopped}
         gameplayConfig={scene.gameplayConfig}
-        mistakeCreatureId={mistakeCreatureId}
         resolution={resolution}
         onCreatureAction={onCreatureAction}
       />
@@ -82,7 +80,6 @@ interface GamePlayfieldProps {
   readonly hitStopped: boolean;
   readonly invulnerable: boolean;
   readonly letterProjectiles: readonly LetterProjectileSpec[];
-  readonly mistakeCreatureId: string | null;
   readonly movementHandlers: MovementHandlers;
   readonly onCreatureAction: (creature: CreatureViewModel, action: CreatureAction) => void;
   readonly onLetterProjectileComplete: (projectileId: string) => void;
