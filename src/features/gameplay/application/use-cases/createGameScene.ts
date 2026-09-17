@@ -9,7 +9,7 @@ import { createCreatureViewModel } from './createCreatureViewModel';
 /*** Build a fresh round for one selected vocabulary category. */
 export function createGameScene(categoryId: string, levelIndex = 0): GameScene {
   const gameplayConfigId: GameplayConfigId = 'starter';
-  const gameplayConfig = GAMEPLAY_CONFIGS[gameplayConfigId];
+  const gameplayConfig = GAMEPLAY_CONFIGS.starter;
   const category = getVocabularyCategory(categoryId);
   const targetWords = getVocabularyWordsForCategory(categoryId);
   const distractorWords = getVocabularyWordsOutsideCategory(categoryId);
@@ -62,7 +62,9 @@ function selectInitialWords(
   distractorWords: readonly VocabularyWord[],
   config: GameplayConfig,
 ): readonly VocabularyWord[] {
-  const selection = Array.from({ length: config.initialCreatureCount }).reduce<InitialWordSelection>(
+  const selection = Array.from({
+    length: config.initialCreatureCount,
+  }).reduce<InitialWordSelection>(
     (state, _, sequence) => {
       const targetPreferred = prefersTarget(sequence, config);
       const word = selectUnusedWord(
