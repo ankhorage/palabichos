@@ -60,7 +60,14 @@ export function GamePlayfield({
           onCrossPlayerLane={onLetterProjectileCrossPlayerLane}
         />
       ))}
-      {shot === null ? null : <ShotTrail key={shot.id} shot={shot} />}
+      {shot === null ? null : (
+        <ShotTrail
+          key={shot.id}
+          shot={shot}
+          durationMs={scene.gameplayConfig.shotVisibleMs}
+          playerLaneYPercent={scene.gameplayConfig.playerLaneYPercent}
+        />
+      )}
       <div className="movement-zone" style={movementZoneStyle} aria-hidden="true">
         <span>mueve</span>
       </div>
