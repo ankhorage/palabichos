@@ -128,8 +128,7 @@ function selectDistractorForRetirement(scene: GameScene): CreatureViewModel | nu
   );
   const forced = eligible.filter(
     (creature) =>
-      creature.ageInCorrectShots >=
-      scene.gameplayConfig.distractorRetireMaxAgeCorrectShots,
+      creature.ageInCorrectShots >= scene.gameplayConfig.distractorRetireMaxAgeCorrectShots,
   );
   const candidates = forced.length > 0 ? forced : eligible;
 
