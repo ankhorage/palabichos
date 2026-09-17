@@ -56,6 +56,7 @@ function PlayfieldActors(props: PlayfieldActorsProps) {
       {props.letterProjectiles.map((projectile) => (
         <LetterProjectile
           key={projectile.id}
+          impacting={props.impactingProjectileId === projectile.id}
           projectile={projectile}
           onComplete={props.onLetterProjectileComplete}
           onCrossPlayerLane={props.onLetterProjectileCrossPlayerLane}
@@ -86,6 +87,7 @@ interface GamePlayfieldProps extends PlayfieldActorsProps {
 interface PlayfieldActorsProps {
   readonly hitPhase: PlayerHitPhase;
   readonly hitStopped: boolean;
+  readonly impactingProjectileId: string | null;
   readonly invulnerable: boolean;
   readonly letterProjectiles: readonly LetterProjectileSpec[];
   readonly onCreatureAction: (creature: CreatureViewModel, action: CreatureAction) => void;

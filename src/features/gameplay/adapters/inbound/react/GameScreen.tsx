@@ -22,6 +22,7 @@ export function GameScreen({ scene }: GameScreenProps) {
         shot={interaction.shot}
         hitPhase={interaction.hitPhase}
         hitStopped={interaction.hitStopped}
+        impactingProjectileId={interaction.impactingProjectileId}
         invulnerable={interaction.invulnerable}
         letterProjectiles={interaction.letterProjectiles}
         playerXPercent={interaction.playerXPercent}
