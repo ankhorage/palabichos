@@ -18,13 +18,13 @@ export function applyCreatureAction(scene: GameScene, creatureId: string): Creat
   const collectedCount = isCorrect
     ? Math.min(scene.level.targetCount, scene.collectedCount + 1)
     : scene.collectedCount;
-  const phase =
+  const phase: GameScene['phase'] =
     progression.health === 0
       ? 'game-over'
       : collectedCount >= scene.level.targetCount
         ? 'level-complete'
         : scene.phase;
-  const progressedScene = {
+  const progressedScene: GameScene = {
     ...scene,
     ...progression,
     collectedCount,
