@@ -1,7 +1,4 @@
-import type {
-  VocabularyCategoryId,
-  VocabularyWord,
-} from '../../../../types/vocabulary';
+import type { VocabularyCategoryId, VocabularyWord } from '../../../../types/vocabulary';
 import { VOCABULARY_WORDS } from '../../constants/words';
 
 /*** Return catalog words that do not belong to the selected target category. */
