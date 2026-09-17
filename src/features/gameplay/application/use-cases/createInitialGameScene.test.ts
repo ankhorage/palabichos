@@ -13,6 +13,11 @@ describe('game scene creation', () => {
     expect(scene.phase).toBe('playing');
     expect(scene.level.targetCount).toBe(20);
     expect(scene.collectedCount).toBe(0);
+    expect(scene.correctStreak).toBe(0);
+    expect(scene.health).toBe(scene.gameplayConfig.startingHealth);
+    expect(scene.gameplayConfig.startingHealth).toBe(5);
+    expect(scene.gameplayConfig.maxHealth).toBe(7);
+    expect(scene.gameplayConfig.correctActionsPerExtraLife).toBe(10);
     expect(scene.spawnSequence).toBe(0);
     expect(scene.creatures.some((creature) => creature.matchesTarget)).toBe(true);
     expect(scene.creatures.some((creature) => !creature.matchesTarget)).toBe(true);
@@ -24,7 +29,7 @@ describe('game scene creation', () => {
     expect(scene.level.title).toBe('COMIDA');
     expect(scene.levelIndex).toBe(1);
     expect(scene.collectedCount).toBe(0);
-    expect(scene.health).toBe(5);
+    expect(scene.health).toBe(scene.gameplayConfig.startingHealth);
     expect(scene.creatures.some((creature) => creature.word.text === 'manzana')).toBe(true);
     expect(scene.creatures.some((creature) => !creature.matchesTarget)).toBe(true);
   });
