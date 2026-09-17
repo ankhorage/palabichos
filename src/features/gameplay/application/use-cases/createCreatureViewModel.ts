@@ -1,5 +1,6 @@
 import type { CreatureViewModel } from '../../../../types/gameplay';
 import type { VocabularyWord } from '../../../../types/vocabulary';
+import { isSameCreatureRegion } from '../../utils/isSameCreatureRegion';
 
 /*** Build creature presentation independently from vocabulary identity and answer correctness. */
 export function createCreatureViewModel(
@@ -59,8 +60,9 @@ function selectPosition(
   );
   const position =
     avoidPosition === null
-      ? available[0]
-      : (available.find((candidate) => !isSameRegion(candidate, avoidPosition)) ?? available[0]);
+      ? available.at(0)
+      : (available.find((candidate) => !isSameCreatureRegion(candidate, avoidPosition)) ??
+        available.at(0));
 
   if (position === undefined) {
     throw new Error('Creature presentation cannot find a readable free position.');
@@ -81,16 +83,6 @@ function isPositionAvailable(
     (creature) =>
       Math.hypot(position.xPercent - creature.xPercent, position.yPercent - creature.yPercent) >=
       minimumDistancePercent,
-  );
-}
-
-/*** Return whether two positions occupy the same broad horizontal and vertical playfield region. */
-function isSameRegion(
-  first: { readonly xPercent: number; readonly yPercent: number },
-  second: { readonly xPercent: number; readonly yPercent: number },
-) {
-  return (
-    first.xPercent < 50 === second.xPercent < 50 && first.yPercent < 45 === second.yPercent < 45
   );
 }
 
