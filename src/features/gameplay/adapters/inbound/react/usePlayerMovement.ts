@@ -18,6 +18,9 @@ export function usePlayerMovement(gameplayConfig: GameplayConfig, enabled = true
     [gameplayConfig.playerStartXPercent],
   );
 
+  useEffect(() => {
+    setXPercent(gameplayConfig.playerStartXPercent);
+  }, [gameplayConfig.playerStartXPercent]);
   useEffect(
     () => bindKeyboardMovement(enabled, gameplayConfig, setXPercent),
     [enabled, gameplayConfig],
