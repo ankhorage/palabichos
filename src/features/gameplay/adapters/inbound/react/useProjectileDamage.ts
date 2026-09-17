@@ -11,14 +11,15 @@ import {
 
 import type {
   GameScene,
+  HorizontalBounds,
   LetterProjectileSpec,
   PlayerHitPhase,
 } from '../../../../../types/gameplay';
 import { applyProjectileHit } from '../../../application/use-cases/applyProjectileHit';
+import { isProjectilePlayerCollision } from '../../../application/use-cases/isProjectilePlayerCollision';
 
 /*** Resolve projectile hits and own the configured K.O./respawn feedback sequence. */
 export function useProjectileDamage({
-  playerXPercent,
   resetPlayer,
   sceneRef,
   setLetterProjectiles,
@@ -27,13 +28,9 @@ export function useProjectileDamage({
   const [hitPhase, setHitPhase] = useState<PlayerHitPhase>('idle');
   const [impactingProjectileId, setImpactingProjectileId] = useState<string | null>(null);
   const [invulnerable, setInvulnerable] = useState(false);
-  const playerXRef = useRef(playerXPercent);
   const invulnerableRef = useRef(false);
   const timers = useHitTimers();
 
-  useEffect(() => {
-    playerXRef.current = playerXPercent;
-  }, [playerXPercent]);
   useEffect(() => () => clearHitTimers(timers), [timers]);
 
   const resetInvulnerability = useCallback(() => {
@@ -44,10 +41,13 @@ export function useProjectileDamage({
     setHitPhase('idle');
   }, [timers]);
   const onLetterProjectileCrossPlayerLane = useCallback(
-    (projectileId: string, impactXPercent: number) =>
-      resolveLaneCrossing(projectileId, impactXPercent, {
+    (
+      projectileId: string,
+      projectileBounds: HorizontalBounds,
+      playerBounds: HorizontalBounds | null,
+    ) =>
+      resolveLaneCrossing(projectileId, projectileBounds, playerBounds, {
         invulnerableRef,
-        playerXRef,
         resetPlayer,
         sceneRef,
         setHitPhase,
@@ -71,7 +71,6 @@ export function useProjectileDamage({
 }
 
 interface ProjectileDamageInput {
-  readonly playerXPercent: number;
   readonly resetPlayer: () => void;
   readonly sceneRef: MutableRefObject<GameScene>;
   readonly setLetterProjectiles: Dispatch<SetStateAction<readonly LetterProjectileSpec[]>>;
@@ -80,7 +79,6 @@ interface ProjectileDamageInput {
 
 interface HitContext {
   readonly invulnerableRef: MutableRefObject<boolean>;
-  readonly playerXRef: MutableRefObject<number>;
   readonly resetPlayer: () => void;
   readonly sceneRef: MutableRefObject<GameScene>;
   readonly setHitPhase: Dispatch<SetStateAction<PlayerHitPhase>>;
@@ -110,16 +108,16 @@ function useHitTimers(): HitTimers {
   );
 }
 
-/*** Resolve one lane crossing against the current configured player hitbox. */
-function resolveLaneCrossing(projectileId: string, impactXPercent: number, context: HitContext) {
-  const scene = context.sceneRef.current;
-  if (
-    Math.abs(impactXPercent - context.playerXRef.current) >
-    scene.gameplayConfig.playerHitRadiusPercent
-  ) {
-    return;
-  }
+/*** Resolve one lane crossing against the currently rendered player and projectile bounds. */
+function resolveLaneCrossing(
+  projectileId: string,
+  projectileBounds: HorizontalBounds,
+  playerBounds: HorizontalBounds | null,
+  context: HitContext,
+) {
+  if (playerBounds === null || !isProjectilePlayerCollision(projectileBounds, playerBounds)) return;
 
+  const scene = context.sceneRef.current;
   const result = applyProjectileHit(scene, context.invulnerableRef.current);
   if (!result.damaged) {
     removeProjectile(projectileId, context.setLetterProjectiles);
