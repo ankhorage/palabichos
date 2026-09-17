@@ -123,7 +123,10 @@ function retireEligibleDistractor(scene: GameScene): DistractorRetirement {
 }
 
 /*** Rotate active distractor positions while moving the newest distractor to another region. */
-function rotateDistractorPositions(scene: GameScene, retiredCreature: CreatureViewModel): GameScene {
+function rotateDistractorPositions(
+  scene: GameScene,
+  retiredCreature: CreatureViewModel,
+): GameScene {
   const distractors = scene.creatures.filter((creature) => !creature.matchesTarget);
   const replacement = distractors.reduce<CreatureViewModel | null>(
     (newest, creature) =>
