@@ -20,7 +20,12 @@ export function applyCreatureAction(scene: GameScene, creatureId: string): Creat
       : collectedCount >= scene.level.targetCount
         ? 'level-complete'
         : scene.phase;
-  const replacementWord = selectReplacementWord(scene);
+  const mustKeepTargetAvailable =
+    creature.matchesTarget &&
+    !scene.creatures.some(
+      (candidate) => candidate.id !== creature.id && candidate.matchesTarget,
+    );
+  const replacementWord = selectReplacementWord(scene, mustKeepTargetAvailable);
   const replacement = createCreatureViewModel(
     replacementWord,
     scene.gameplayConfig.initialCreatureCount + scene.spawnSequence,
@@ -73,15 +78,15 @@ function mistakeProgression(scene: GameScene) {
   };
 }
 
-/*** Select the next unused round word while preserving the configured target ratio. */
-function selectReplacementWord(scene: GameScene): VocabularyWord {
+/*** Select the next unused round word while preserving target availability and the configured ratio. */
+function selectReplacementWord(scene: GameScene, forceTarget: boolean): VocabularyWord {
   const targetWords = scene.remainingWords.filter((word) =>
     word.categoryIds.includes(scene.level.targetCategoryId),
   );
   const distractorWords = scene.remainingWords.filter(
     (word) => !word.categoryIds.includes(scene.level.targetCategoryId),
   );
-  const targetPreferred = prefersTarget(scene.spawnSequence, scene.gameplayConfig);
+  const targetPreferred = forceTarget || prefersTarget(scene.spawnSequence, scene.gameplayConfig);
   const word = targetPreferred
     ? (targetWords[0] ?? distractorWords[0])
     : (distractorWords[0] ?? targetWords[0]);
