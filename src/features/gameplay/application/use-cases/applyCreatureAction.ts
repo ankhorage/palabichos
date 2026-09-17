@@ -7,23 +7,22 @@ import type {
 import type { VocabularyWord } from '../../../../types/vocabulary';
 import { createCreatureViewModel } from './createCreatureViewModel';
 
-/*** Apply one collect-or-shoot decision and return the next immutable gameplay scene. */
+/*** Apply one creature shot and return the next immutable gameplay scene. */
 export function applyCreatureAction(
   scene: GameScene,
   creatureId: string,
-  action: CreatureAction,
+  _action: CreatureAction,
 ): CreatureActionResult {
   if (scene.phase !== 'playing') return ignoredResult(scene, creatureId);
 
   const creature = scene.creatures.find((candidate) => candidate.id === creatureId);
   if (creature === undefined) return ignoredResult(scene, creatureId);
 
-  const isCorrect = action === 'collect' ? creature.matchesTarget : !creature.matchesTarget;
+  const isCorrect = creature.matchesTarget;
   const progression = isCorrect ? correctProgression(scene) : mistakeProgression(scene);
-  const collectedCount =
-    action === 'collect' && isCorrect
-      ? Math.min(scene.level.targetCount, scene.collectedCount + 1)
-      : scene.collectedCount;
+  const collectedCount = isCorrect
+    ? Math.min(scene.level.targetCount, scene.collectedCount + 1)
+    : scene.collectedCount;
   const phase =
     progression.health === 0
       ? 'game-over'
@@ -35,6 +34,7 @@ export function applyCreatureAction(
     replacementWord,
     scene.gameplayConfig.initialCreatureCount + scene.spawnSequence,
     scene.level.targetCategoryId,
+    scene.presentationSeed,
   );
 
   return {
@@ -50,7 +50,7 @@ export function applyCreatureAction(
       usedWordIds: [...scene.usedWordIds, replacementWord.id],
       spawnSequence: scene.spawnSequence + 1,
     },
-    outcome: action === 'shoot' ? 'destroyed' : 'collected',
+    outcome: 'destroyed',
     creatureId,
     vocabWord: isCorrect ? creature.word : null,
   };
