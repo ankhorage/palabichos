@@ -6,13 +6,13 @@ type CreatureMotion = 'bob' | 'drift' | 'sway';
 
 type GamePhase = 'playing' | 'level-complete' | 'game-over';
 
-export type CreatureAction = 'collect' | 'shoot';
+export type CreatureAction = 'shoot';
 
 export type GameplayConfigId = 'starter';
 
 export type PlayerHitPhase = 'idle' | 'hitstop' | 'hidden' | 'respawning';
 
-type CreatureActionOutcome = 'collected' | 'destroyed' | 'ignored';
+type CreatureActionOutcome = 'destroyed' | 'ignored';
 
 interface CreatureAppearance {
   readonly xPercent: number;
@@ -24,8 +24,6 @@ interface CreatureAppearance {
 }
 
 export interface GameplayConfig {
-  readonly collectHoldMs: number;
-  readonly pointerCancelDistancePx: number;
   readonly resolutionFeedbackMs: number;
   readonly mistakeVisibleMs: number;
   readonly shotVisibleMs: number;
@@ -100,6 +98,7 @@ export interface GameScene {
   readonly remainingWords: readonly VocabularyWord[];
   readonly usedWordIds: readonly string[];
   readonly spawnSequence: number;
+  readonly presentationSeed: number;
 }
 
 export interface CreatureActionResult {
