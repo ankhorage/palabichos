@@ -12,7 +12,7 @@ export type CreatureAction = 'collect' | 'shoot';
 
 export type GameplayConfigId = 'starter';
 
-export type PlayerHitPhase = 'idle' | 'hitstop' | 'respawning';
+export type PlayerHitPhase = 'idle' | 'hitstop' | 'hidden' | 'respawning';
 
 type CreatureActionOutcome = 'collected' | 'destroyed' | 'mistake' | 'ignored';
 
