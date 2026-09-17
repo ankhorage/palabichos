@@ -35,27 +35,43 @@ interface SceneReplacementContext {
 }
 
 /*** Schedule the configured success pause before advancing to another playable category. */
-function useAutomaticLevelAdvance(input: GameLifecycleInput) {
+function useAutomaticLevelAdvance({
+  randomSource,
+  resetInvulnerability,
+  resetPlayer,
+  scene,
+  sceneRef,
+  setLetterProjectiles,
+  setScene,
+  setShot,
+}: GameLifecycleInput) {
   const transitionTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (input.scene.phase !== 'level-complete') return undefined;
+    if (scene.phase !== 'level-complete') return undefined;
 
     transitionTimerRef.current = window.setTimeout(() => {
-      const nextScene = advanceGameScene(input.sceneRef.current, input.randomSource());
-      replaceScene(nextScene, replacementContext(input));
-    }, input.scene.gameplayConfig.levelCompleteVisibleMs);
+      const nextScene = advanceGameScene(sceneRef.current, randomSource());
+      replaceScene(nextScene, {
+        resetInvulnerability,
+        resetPlayer,
+        sceneRef,
+        setLetterProjectiles,
+        setScene,
+        setShot,
+      });
+    }, scene.gameplayConfig.levelCompleteVisibleMs);
     return () => clearTransitionTimer(transitionTimerRef);
   }, [
-    input.randomSource,
-    input.resetInvulnerability,
-    input.resetPlayer,
-    input.scene.gameplayConfig.levelCompleteVisibleMs,
-    input.scene.phase,
-    input.sceneRef,
-    input.setLetterProjectiles,
-    input.setScene,
-    input.setShot,
+    randomSource,
+    resetInvulnerability,
+    resetPlayer,
+    scene.gameplayConfig.levelCompleteVisibleMs,
+    scene.phase,
+    sceneRef,
+    setLetterProjectiles,
+    setScene,
+    setShot,
   ]);
 }
 
