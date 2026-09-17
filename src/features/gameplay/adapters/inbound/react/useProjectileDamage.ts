@@ -25,6 +25,7 @@ export function useProjectileDamage({
   setScene,
 }: ProjectileDamageInput) {
   const [hitPhase, setHitPhase] = useState<PlayerHitPhase>('idle');
+  const [impactingProjectileId, setImpactingProjectileId] = useState<string | null>(null);
   const [invulnerable, setInvulnerable] = useState(false);
   const playerXRef = useRef(playerXPercent);
   const invulnerableRef = useRef(false);
@@ -38,6 +39,7 @@ export function useProjectileDamage({
   const resetInvulnerability = useCallback(() => {
     clearHitTimers(timers);
     invulnerableRef.current = false;
+    setImpactingProjectileId(null);
     setInvulnerable(false);
     setHitPhase('idle');
   }, [timers]);
@@ -49,6 +51,7 @@ export function useProjectileDamage({
         resetPlayer,
         sceneRef,
         setHitPhase,
+        setImpactingProjectileId,
         setInvulnerable,
         setLetterProjectiles,
         setScene,
@@ -60,6 +63,7 @@ export function useProjectileDamage({
   return {
     hitPhase,
     hitStopped: hitPhase === 'hitstop',
+    impactingProjectileId,
     invulnerable,
     onLetterProjectileCrossPlayerLane,
     resetInvulnerability,
@@ -80,6 +84,7 @@ interface HitContext {
   readonly resetPlayer: () => void;
   readonly sceneRef: MutableRefObject<GameScene>;
   readonly setHitPhase: Dispatch<SetStateAction<PlayerHitPhase>>;
+  readonly setImpactingProjectileId: Dispatch<SetStateAction<string | null>>;
   readonly setInvulnerable: Dispatch<SetStateAction<boolean>>;
   readonly setLetterProjectiles: Dispatch<SetStateAction<readonly LetterProjectileSpec[]>>;
   readonly setScene: Dispatch<SetStateAction<GameScene>>;
@@ -115,28 +120,30 @@ function resolveLaneCrossing(projectileId: string, impactXPercent: number, conte
     return;
   }
 
-  context.setLetterProjectiles((current) =>
-    current.filter((projectile) => projectile.id !== projectileId),
-  );
   const result = applyProjectileHit(scene, context.invulnerableRef.current);
-  if (!result.damaged) return;
+  if (!result.damaged) {
+    removeProjectile(projectileId, context.setLetterProjectiles);
+    return;
+  }
 
+  context.setImpactingProjectileId(projectileId);
   context.sceneRef.current = result.scene;
   context.setScene(result.scene);
-  startHitFeedback(result.scene, context);
+  startHitFeedback(result.scene, projectileId, context);
 }
 
 /*** Run hitstop, K.O. disappearance, centered respawn, blinking, and invulnerability. */
-function startHitFeedback(scene: GameScene, context: HitContext) {
+function startHitFeedback(scene: GameScene, projectileId: string, context: HitContext) {
   const config = scene.gameplayConfig;
   clearHitTimers(context.timers);
   context.invulnerableRef.current = true;
   context.setInvulnerable(true);
   context.setHitPhase('hitstop');
-  context.timers.hitStop.current = window.setTimeout(
-    () => context.setHitPhase('hidden'),
-    config.hitStopMs,
-  );
+  context.timers.hitStop.current = window.setTimeout(() => {
+    removeProjectile(projectileId, context.setLetterProjectiles);
+    context.setImpactingProjectileId(null);
+    context.setHitPhase('hidden');
+  }, config.hitStopMs);
   context.timers.respawn.current = window.setTimeout(() => {
     context.resetPlayer();
     context.setHitPhase('respawning');
@@ -149,6 +156,14 @@ function startHitFeedback(scene: GameScene, context: HitContext) {
     context.invulnerableRef.current = false;
     context.setInvulnerable(false);
   }, config.invulnerabilityMs);
+}
+
+/*** Remove one projectile from the transient browser presentation. */
+function removeProjectile(
+  projectileId: string,
+  setProjectiles: Dispatch<SetStateAction<readonly LetterProjectileSpec[]>>,
+) {
+  setProjectiles((current) => current.filter((projectile) => projectile.id !== projectileId));
 }
 
 /*** Clear every browser timeout owned by the hit-feedback lifecycle. */

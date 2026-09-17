@@ -4,6 +4,7 @@ import type { LetterProjectileSpec } from '../../../../../types/gameplay';
 
 /*** Render one configured falling letter and report when it crosses the player lane. */
 export function LetterProjectile({
+  impacting,
   onComplete,
   onCrossPlayerLane,
   projectile,
@@ -27,7 +28,7 @@ export function LetterProjectile({
 
   return (
     <span
-      className="letter-projectile"
+      className={impacting ? 'letter-projectile letter-projectile--impact' : 'letter-projectile'}
       style={style}
       data-letter-projectile={projectile.id}
       onAnimationEnd={() => onComplete(projectile.id)}
@@ -39,6 +40,7 @@ export function LetterProjectile({
 }
 
 interface LetterProjectileProps {
+  readonly impacting: boolean;
   readonly projectile: LetterProjectileSpec;
   readonly onComplete: (projectileId: string) => void;
   readonly onCrossPlayerLane: (projectileId: string, impactXPercent: number) => void;
