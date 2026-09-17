@@ -120,11 +120,13 @@ function shootTargets(scene: GameScene, shotCount: number): GameScene {
 /*** Return whether every active creature pair keeps the configured minimum presentation distance. */
 function hasReadableCreatureSpacing(scene: GameScene) {
   return scene.creatures.every((creature, index) =>
-    scene.creatures.slice(index + 1).every(
-      (other) =>
-        Math.hypot(creature.xPercent - other.xPercent, creature.yPercent - other.yPercent) >=
-        scene.gameplayConfig.creatureMinimumDistancePercent,
-    ),
+    scene.creatures
+      .slice(index + 1)
+      .every(
+        (other) =>
+          Math.hypot(creature.xPercent - other.xPercent, creature.yPercent - other.yPercent) >=
+          scene.gameplayConfig.creatureMinimumDistancePercent,
+      ),
   );
 }
 
