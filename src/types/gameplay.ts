@@ -6,15 +6,13 @@ type CreatureMotion = 'bob' | 'drift' | 'sway';
 
 type GamePhase = 'playing' | 'level-complete' | 'game-over';
 
-type LetterTrajectory = 'far-left' | 'left' | 'center' | 'right' | 'far-right';
-
 export type CreatureAction = 'collect' | 'shoot';
 
 export type GameplayConfigId = 'starter';
 
 export type PlayerHitPhase = 'idle' | 'hitstop' | 'hidden' | 'respawning';
 
-type CreatureActionOutcome = 'collected' | 'destroyed' | 'mistake' | 'ignored';
+type CreatureActionOutcome = 'collected' | 'destroyed' | 'ignored';
 
 interface WordEntry {
   readonly id: string;
@@ -125,7 +123,8 @@ export interface LetterProjectileSpec {
   readonly letter: string;
   readonly startXPercent: number;
   readonly startYPercent: number;
-  readonly trajectory: LetterTrajectory;
+  readonly driftPercent: number;
+  readonly fallDistancePercent: number;
   readonly durationMs: number;
   readonly delayMs: number;
   readonly impactXPercent: number;
