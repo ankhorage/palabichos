@@ -19,22 +19,24 @@ describe('game lifecycle', () => {
     expect(next.presentationSeed).toBe(0.25);
   });
 
-  test('restarts the current category and resets round-local words without moving its layout', () => {
+  test('restarts the current category and resets resolved words without moving its initial layout', () => {
     const initial = createGameScene('food', 3, 0.75);
-    const usedDuringRound = [...initial.usedWordIds, 'synthetic-used-word'];
     const restarted = restartGameScene({
       ...initial,
       collectedCount: 8,
       health: 0,
       phase: 'game-over',
-      usedWordIds: usedDuringRound,
+      resolvedWordIds: ['synthetic-resolved-word'],
+      boardSequence: 4,
     });
 
     expect(restarted.level.targetCategoryId).toBe('food');
     expect(restarted.levelIndex).toBe(3);
     expect(restarted.phase).toBe('playing');
-    expect(restarted.usedWordIds).toEqual(initial.usedWordIds);
+    expect(restarted.resolvedWordIds).toEqual([]);
+    expect(restarted.boardSequence).toBe(0);
     expect(restarted.health).toBe(restarted.gameplayConfig.startingHealth);
     expect(restarted.presentationSeed).toBe(0.75);
+    expect(restarted.creatures).toEqual(initial.creatures);
   });
 });
