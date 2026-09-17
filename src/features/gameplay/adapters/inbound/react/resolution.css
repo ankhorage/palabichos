@@ -10,20 +10,63 @@
   filter: brightness(1.08) saturate(1.04);
 }
 
+.word-creature--reward {
+  border-color: rgba(223, 255, 205, 0.78);
+  box-shadow:
+    inset 0 2px rgba(255, 255, 255, 0.24),
+    0 0 28px rgba(190, 255, 168, 0.32),
+    0 12px 28px rgba(5, 10, 25, 0.24);
+  animation: creature-reward 560ms ease-out both;
+}
+
+.word-creature--resolution-mistake {
+  opacity: 0.68;
+  filter: brightness(0.72) saturate(0.72);
+  animation: creature-resolution-mistake 360ms ease-in-out both;
+}
+
 .word-label--resolution {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 7px;
   font-size: clamp(12px, 3.7vw, 17px);
   animation: word-resolution-in 220ms ease-out both;
 }
 
-.resolution-marker {
+.resolution-reward {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 1.45em;
+  height: 1.45em;
   flex: none;
-  font-size: 0.88em;
+}
+
+.resolution-crystal {
+  color: #efffdc;
+  font-size: 1.02em;
   line-height: 1;
-  filter: drop-shadow(0 1px 4px rgba(10, 16, 35, 0.28));
+  text-shadow:
+    0 0 5px rgba(229, 255, 207, 0.96),
+    0 0 12px rgba(166, 255, 187, 0.72);
+  transform: rotate(45deg);
+  animation: resolution-crystal-pop 520ms cubic-bezier(0.2, 0.85, 0.3, 1.25) both;
+}
+
+.reward-sparkles {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 3.8em;
+  color: rgba(239, 255, 220, 0.92);
+  font-size: 0.42em;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 0 5px rgba(177, 255, 190, 0.85);
+  transform: translate(-50%, -50%);
+  animation: reward-sparkles 620ms ease-out both;
 }
 
 @keyframes word-resolution-in {
@@ -37,8 +80,69 @@
   }
 }
 
+@keyframes creature-reward {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  45% {
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.02);
+  }
+}
+
+@keyframes creature-resolution-mistake {
+  0%,
+  100% {
+    transform: translate(-50%, -50%);
+  }
+  28% {
+    transform: translate(-50%, -50%) translateX(-7px) rotate(-3deg);
+  }
+  56% {
+    transform: translate(-50%, -50%) translateX(6px) rotate(3deg);
+  }
+  78% {
+    transform: translate(-50%, -50%) translateX(-3px) rotate(-1deg);
+  }
+}
+
+@keyframes resolution-crystal-pop {
+  0% {
+    opacity: 0;
+    transform: rotate(45deg) scale(0.2);
+  }
+  65% {
+    opacity: 1;
+    transform: rotate(45deg) scale(1.22);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(45deg) scale(1);
+  }
+}
+
+@keyframes reward-sparkles {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.45);
+  }
+  45% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.55);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .word-label--resolution {
+  .word-creature--reward,
+  .word-creature--resolution-mistake,
+  .word-label--resolution,
+  .resolution-crystal,
+  .reward-sparkles {
     animation: none;
   }
 }

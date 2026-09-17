@@ -2,6 +2,7 @@ import type {
   CreatureAction,
   CreatureResolution,
   CreatureViewModel,
+  GameplayConfig,
 } from '../../../../../types/gameplay';
 import { WordCreature } from './WordCreature';
 
@@ -9,7 +10,7 @@ import { WordCreature } from './WordCreature';
 export function CreatureField({
   creatures,
   disabled,
-  mistakeCreatureId,
+  gameplayConfig,
   onCreatureAction,
   resolution,
 }: CreatureFieldProps) {
@@ -18,7 +19,7 @@ export function CreatureField({
       key={creature.id}
       creature={creature}
       disabled={disabled}
-      mistake={mistakeCreatureId === creature.id}
+      gameplayConfig={gameplayConfig}
       resolution={resolution?.creatureId === creature.id ? resolution : null}
       onAction={onCreatureAction}
     />
@@ -28,7 +29,7 @@ export function CreatureField({
 interface CreatureFieldProps {
   readonly creatures: readonly CreatureViewModel[];
   readonly disabled: boolean;
-  readonly mistakeCreatureId: string | null;
+  readonly gameplayConfig: GameplayConfig;
   readonly onCreatureAction: (creature: CreatureViewModel, action: CreatureAction) => void;
   readonly resolution: CreatureResolution | null;
 }

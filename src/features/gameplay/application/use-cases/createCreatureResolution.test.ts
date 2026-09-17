@@ -4,7 +4,7 @@ import { createCreatureResolution } from './createCreatureResolution';
 import { createInitialGameScene } from './createInitialGameScene';
 
 describe('createCreatureResolution', () => {
-  test('reports semantic truth independently from the chosen action', () => {
+  test('derives correctness from category membership and the selected action', () => {
     const scene = createInitialGameScene();
     const gato = scene.creatures.find((creature) => creature.word.id === 'gato');
     const mesa = scene.creatures.find((creature) => creature.word.id === 'mesa');
@@ -13,14 +13,16 @@ describe('createCreatureResolution', () => {
     expect(mesa).toBeDefined();
     if (gato === undefined || mesa === undefined) return;
 
-    const wrongShot = createCreatureResolution(gato, 'shoot', 1);
-    const correctShot = createCreatureResolution(mesa, 'shoot', 2);
+    const targetCollect = createCreatureResolution(gato, 'collect', 1);
+    const targetShoot = createCreatureResolution(gato, 'shoot', 2);
+    const distractorShoot = createCreatureResolution(mesa, 'shoot', 3);
+    const distractorCollect = createCreatureResolution(mesa, 'collect', 4);
 
-    expect(wrongShot.translation).toBe('Katze');
-    expect(wrongShot.matchesTarget).toBe(true);
-    expect(wrongShot.isCorrect).toBe(false);
-    expect(correctShot.translation).toBe('Tisch');
-    expect(correctShot.matchesTarget).toBe(false);
-    expect(correctShot.isCorrect).toBe(true);
+    expect(targetCollect.translation).toBe('Katze');
+    expect(targetCollect.isCorrect).toBe(true);
+    expect(targetShoot.isCorrect).toBe(false);
+    expect(distractorShoot.translation).toBe('Tisch');
+    expect(distractorShoot.isCorrect).toBe(true);
+    expect(distractorCollect.isCorrect).toBe(false);
   });
 });

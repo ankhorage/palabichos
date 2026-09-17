@@ -6,11 +6,13 @@ type CreatureMotion = 'bob' | 'drift' | 'sway';
 
 type GamePhase = 'playing' | 'level-complete' | 'game-over';
 
-type LetterTrajectory = 'far-left' | 'left' | 'center' | 'right' | 'far-right';
-
 export type CreatureAction = 'collect' | 'shoot';
 
-type CreatureActionOutcome = 'collected' | 'destroyed' | 'mistake' | 'ignored';
+export type GameplayConfigId = 'starter';
+
+export type PlayerHitPhase = 'idle' | 'hitstop' | 'hidden' | 'respawning';
+
+type CreatureActionOutcome = 'collected' | 'destroyed' | 'ignored';
 
 interface WordEntry {
   readonly id: string;
@@ -30,12 +32,50 @@ interface CreatureSeed {
   readonly animationDurationSeconds: number;
 }
 
+export interface GameplayConfig {
+  readonly collectHoldMs: number;
+  readonly pointerCancelDistancePx: number;
+  readonly resolutionFeedbackMs: number;
+  readonly mistakeVisibleMs: number;
+  readonly shotVisibleMs: number;
+  readonly startingHealth: number;
+  readonly maxHealth: number;
+  readonly correctActionsPerExtraLife: number;
+  readonly wrongActionDamage: number;
+  readonly projectileDamage: number;
+  readonly movementZoneStartPercent: number;
+  readonly playerMinXPercent: number;
+  readonly playerMaxXPercent: number;
+  readonly playerStartXPercent: number;
+  readonly keyboardStepPercent: number;
+  readonly projectileBaseDurationMs: number;
+  readonly projectileDurationStepMs: number;
+  readonly projectileDelayStepMs: number;
+  readonly projectileLetterSpacingPercent: number;
+  readonly playerLaneYPercent: number;
+  readonly projectileFallDistancePercent: number;
+  readonly projectileMinImpactProgress: number;
+  readonly projectileMaxImpactProgress: number;
+  readonly projectileMinXPercent: number;
+  readonly projectileMaxXPercent: number;
+  readonly projectileNearDriftPercent: number;
+  readonly projectileFarDriftPercent: number;
+  readonly playerHitRadiusPercent: number;
+  readonly invulnerabilityMs: number;
+  readonly levelCompleteVisibleMs: number;
+  readonly rewardParticleCount: number;
+  readonly hitStopMs: number;
+  readonly playerRespawnDelayMs: number;
+  readonly playerRespawnBlinkMs: number;
+}
+
 export interface LevelDefinition {
   readonly id: string;
   readonly number: number;
   readonly title: string;
   readonly targetCategory: WordCategory;
   readonly targetCount: number;
+  readonly gameplayConfigId: GameplayConfigId;
   readonly initialCreatures: readonly CreatureSeed[];
   readonly respawnCreatures: readonly CreatureSeed[];
 }
@@ -55,9 +95,11 @@ export interface CreatureResolution {
 
 export interface GameScene {
   readonly level: LevelDefinition;
+  readonly gameplayConfig: GameplayConfig;
   readonly levelIndex: number;
   readonly phase: GamePhase;
   readonly collectedCount: number;
+  readonly correctStreak: number;
   readonly health: number;
   readonly creatures: readonly CreatureViewModel[];
   readonly spawnSequence: number;
@@ -81,7 +123,8 @@ export interface LetterProjectileSpec {
   readonly letter: string;
   readonly startXPercent: number;
   readonly startYPercent: number;
-  readonly trajectory: LetterTrajectory;
+  readonly driftPercent: number;
+  readonly fallDistancePercent: number;
   readonly durationMs: number;
   readonly delayMs: number;
   readonly impactXPercent: number;

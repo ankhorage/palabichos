@@ -5,6 +5,12 @@
   -webkit-touch-callout: none;
 }
 
+.playfield--hitstop .letter-projectile,
+.playfield--hitstop .shot-layer,
+.playfield--hitstop .word-creature {
+  animation-play-state: paused !important;
+}
+
 .word-creature {
   appearance: none;
   margin: 0;
@@ -22,10 +28,6 @@
 .word-creature--holding {
   animation-play-state: paused;
   filter: brightness(1.06);
-}
-
-.word-creature--mistake {
-  animation: creature-mistake 360ms ease-in-out;
 }
 
 .collect-ring {
@@ -98,29 +100,10 @@
     0 2px 8px rgba(10, 16, 35, 0.72),
     0 0 10px rgba(203, 226, 255, 0.38);
   pointer-events: none;
+  animation-name: letter-fall;
   animation-timing-function: linear;
   animation-fill-mode: forwards;
   will-change: transform;
-}
-
-.letter-projectile--far-left {
-  animation-name: letter-fall-far-left;
-}
-
-.letter-projectile--left {
-  animation-name: letter-fall-left;
-}
-
-.letter-projectile--center {
-  animation-name: letter-fall-center;
-}
-
-.letter-projectile--right {
-  animation-name: letter-fall-right;
-}
-
-.letter-projectile--far-right {
-  animation-name: letter-fall-far-right;
 }
 
 .movement-zone {
@@ -129,7 +112,6 @@
   right: 4%;
   bottom: 0;
   left: 4%;
-  height: 35%;
   border-top: 1px solid rgba(182, 255, 195, 0.08);
   background: linear-gradient(180deg, transparent, rgba(65, 160, 112, 0.055));
   pointer-events: none;
@@ -159,6 +141,42 @@
   filter: drop-shadow(0 0 9px rgba(210, 236, 255, 0.52));
 }
 
+.player--hitstop {
+  animation: player-hitstop 70ms ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 12px rgba(255, 211, 220, 0.7));
+}
+
+.player--hitstop .player-eye {
+  top: 34%;
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 0;
+  color: #233756;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.player--hitstop .player-eye-left {
+  left: 18%;
+}
+
+.player--hitstop .player-eye-right {
+  right: 18%;
+}
+
+.player--hidden {
+  opacity: 0;
+  animation: none;
+}
+
+.player--respawning {
+  animation: player-respawn-blink 140ms steps(2, end) infinite;
+}
+
 @keyframes collect-ring-progress {
   to {
     stroke-dashoffset: 0;
@@ -177,33 +195,9 @@
   }
 }
 
-@keyframes letter-fall-far-left {
+@keyframes letter-fall {
   to {
-    transform: translate(-14vw, 110dvh) rotate(-18deg);
-  }
-}
-
-@keyframes letter-fall-left {
-  to {
-    transform: translate(-7vw, 110dvh) rotate(-9deg);
-  }
-}
-
-@keyframes letter-fall-center {
-  to {
-    transform: translate(0, 110dvh) rotate(6deg);
-  }
-}
-
-@keyframes letter-fall-right {
-  to {
-    transform: translate(7vw, 110dvh) rotate(12deg);
-  }
-}
-
-@keyframes letter-fall-far-right {
-  to {
-    transform: translate(14vw, 110dvh) rotate(20deg);
+    transform: translate(var(--projectile-drift), var(--projectile-fall-distance));
   }
 }
 
@@ -216,19 +210,23 @@
   }
 }
 
-@keyframes creature-mistake {
+@keyframes player-hitstop {
+  from {
+    transform: translateX(-50%) translateX(-2px);
+  }
+  to {
+    transform: translateX(-50%) translateX(2px);
+  }
+}
+
+@keyframes player-respawn-blink {
   0%,
+  48% {
+    opacity: 0.28;
+  }
+  52%,
   100% {
-    transform: translate(-50%, -50%);
-  }
-  25% {
-    transform: translate(-50%, -50%) translateX(-9px) rotate(-4deg);
-  }
-  50% {
-    transform: translate(-50%, -50%) translateX(8px) rotate(4deg);
-  }
-  75% {
-    transform: translate(-50%, -50%) translateX(-5px) rotate(-2deg);
+    opacity: 1;
   }
 }
 
@@ -238,8 +236,9 @@
   }
 
   .player--invulnerable,
-  .shot-line,
-  .word-creature--mistake {
+  .player--hitstop,
+  .player--respawning,
+  .shot-line {
     animation: none;
   }
 

@@ -2,54 +2,43 @@ import type {
   CreatureAction,
   CreatureResolution,
   CreatureViewModel,
+  GameplayConfig,
 } from '../../../../../types/gameplay';
 import { CollectRing } from './CollectRing';
 import { useCreatureGesture } from './useCreatureGesture';
 import { WordCreatureLabel } from './WordCreatureLabel';
 
-/*** Render one readable word creature with translated resolution feedback. */
+/*** Render one readable word creature with translated action-based resolution feedback. */
 export function WordCreature({
   creature,
   disabled,
-  mistake,
+  gameplayConfig,
   onAction,
   resolution,
 }: WordCreatureProps) {
-  const { handlers, holding } = useCreatureGesture(creature, onAction);
-  const style = {
-    animationDelay: `${creature.animationDelaySeconds}s`,
-    animationDuration: `${creature.animationDurationSeconds}s`,
-    left: `${creature.xPercent}%`,
-    top: `${creature.yPercent}%`,
-  };
-  const className = [
-    'word-creature',
-    `word-creature--${creature.variant}`,
-    `word-creature--${creature.motion}`,
-    holding ? 'word-creature--holding' : '',
-    resolution === null ? '' : 'word-creature--resolving',
-    mistake ? 'word-creature--mistake' : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
+  const { handlers, holding } = useCreatureGesture(creature, onAction, gameplayConfig);
 
   return (
     <button
       type="button"
-      className={className}
-      style={style}
+      className={createWordCreatureClassName(creature, holding, resolution)}
+      style={createWordCreatureStyle(creature, gameplayConfig, resolution)}
       aria-label={resolution?.translation ?? creature.word.text}
       disabled={disabled}
       {...handlers}
     >
-      <CollectRing active={holding && !disabled} />
+      <CollectRing active={holding && !disabled} durationMs={gameplayConfig.collectHoldMs} />
       <span className="antenna antenna-left" aria-hidden="true" />
       <span className="antenna antenna-right" aria-hidden="true" />
       <span className="creature-face" aria-hidden="true">
         <span className="eye" />
         <span className="eye" />
       </span>
-      <WordCreatureLabel text={creature.word.text} resolution={resolution} />
+      <WordCreatureLabel
+        text={creature.word.text}
+        resolution={resolution}
+        rewardParticleCount={gameplayConfig.rewardParticleCount}
+      />
       <span className="creature-feet" aria-hidden="true">
         <span />
         <span />
@@ -61,7 +50,45 @@ export function WordCreature({
 interface WordCreatureProps {
   readonly creature: CreatureViewModel;
   readonly disabled: boolean;
-  readonly mistake: boolean;
+  readonly gameplayConfig: GameplayConfig;
   readonly onAction: (creature: CreatureViewModel, action: CreatureAction) => void;
   readonly resolution: CreatureResolution | null;
+}
+
+/*** Build the creature classes for idle, hold, reward, and mistake presentation states. */
+function createWordCreatureClassName(
+  creature: CreatureViewModel,
+  holding: boolean,
+  resolution: CreatureResolution | null,
+) {
+  return [
+    'word-creature',
+    `word-creature--${creature.variant}`,
+    `word-creature--${creature.motion}`,
+    holding ? 'word-creature--holding' : '',
+    resolution === null ? '' : 'word-creature--resolving',
+    resolution?.isCorrect === true ? 'word-creature--reward' : '',
+    resolution?.isCorrect === false ? 'word-creature--resolution-mistake' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+}
+
+/*** Build configured animation and position styles for one creature. */
+function createWordCreatureStyle(
+  creature: CreatureViewModel,
+  gameplayConfig: GameplayConfig,
+  resolution: CreatureResolution | null,
+) {
+  return {
+    animationDelay: `${creature.animationDelaySeconds}s`,
+    animationDuration:
+      resolution === null
+        ? `${creature.animationDurationSeconds}s`
+        : resolution.isCorrect
+          ? undefined
+          : `${gameplayConfig.mistakeVisibleMs}ms`,
+    left: `${creature.xPercent}%`,
+    top: `${creature.yPercent}%`,
+  };
 }

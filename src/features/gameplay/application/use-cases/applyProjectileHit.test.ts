@@ -4,12 +4,13 @@ import { applyProjectileHit } from './applyProjectileHit';
 import { createInitialGameScene } from './createInitialGameScene';
 
 describe('applyProjectileHit', () => {
-  test('removes exactly one health while vulnerable', () => {
-    const scene = createInitialGameScene();
+  test('removes exactly one health and resets the correct streak while vulnerable', () => {
+    const scene = { ...createInitialGameScene(), correctStreak: 6 };
     const result = applyProjectileHit(scene, false);
 
     expect(result.damaged).toBe(true);
     expect(result.scene.health).toBe(4);
+    expect(result.scene.correctStreak).toBe(0);
   });
 
   test('ignores additional hits during invulnerability', () => {

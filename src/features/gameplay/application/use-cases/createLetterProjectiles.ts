@@ -1,21 +1,33 @@
-import type { CreatureViewModel, LetterProjectileSpec } from '../../../../types/gameplay';
+import type {
+  CreatureViewModel,
+  GameplayConfig,
+  LetterProjectileSpec,
+} from '../../../../types/gameplay';
 
-/*** Split one destroyed word translation into deterministic readable letter projectile specifications. */
+/*** Split one destroyed word translation into deterministic configured letter projectiles. */
 export function createLetterProjectiles(
   creature: CreatureViewModel,
   sequence: number,
+  config: GameplayConfig,
 ): readonly LetterProjectileSpec[] {
   const letters = Array.from(creature.word.translation);
   const centerOffset = (letters.length - 1) / 2;
 
   return letters.map((letter, index) => {
-    const trajectory = trajectoryForIndex(index);
-    const startXPercent = clampPercent(creature.xPercent + (index - centerOffset) * 2.2);
-    const durationMs = 3400 + (index % 3) * 260;
-    const delayMs = index * 70;
+    const driftPercent = driftPercentForIndex(index, config);
+    const startXPercent = clampPercent(
+      creature.xPercent + (index - centerOffset) * config.projectileLetterSpacingPercent,
+      config,
+    );
+    const durationMs =
+      config.projectileBaseDurationMs + (index % 3) * config.projectileDurationStepMs;
+    const delayMs = index * config.projectileDelayStepMs;
     const impactProgress = Math.min(
-      0.82,
-      Math.max(0.16, (PLAYER_LANE_Y_PERCENT - creature.yPercent) / FALL_DISTANCE_PERCENT),
+      config.projectileMaxImpactProgress,
+      Math.max(
+        config.projectileMinImpactProgress,
+        (config.playerLaneYPercent - creature.yPercent) / config.projectileFallDistancePercent,
+      ),
     );
 
     return {
@@ -23,51 +35,33 @@ export function createLetterProjectiles(
       letter,
       startXPercent,
       startYPercent: creature.yPercent,
-      trajectory,
+      driftPercent,
+      fallDistancePercent: config.projectileFallDistancePercent,
       durationMs,
       delayMs,
-      impactXPercent: clampPercent(startXPercent + trajectoryDriftPercent(trajectory)),
+      impactXPercent: clampPercent(startXPercent + driftPercent, config),
       impactDelayMs: delayMs + Math.round(durationMs * impactProgress),
     };
   });
 }
 
-/*** Map a letter position to one of five calm horizontal fall trajectories. */
-function trajectoryForIndex(index: number): LetterProjectileSpec['trajectory'] {
+/*** Select one of five configured horizontal drifts for a letter position. */
+function driftPercentForIndex(index: number, config: GameplayConfig) {
   switch (index % 5) {
     case 0:
-      return 'far-left';
+      return -config.projectileFarDriftPercent;
     case 1:
-      return 'left';
+      return -config.projectileNearDriftPercent;
     case 3:
-      return 'right';
+      return config.projectileNearDriftPercent;
     case 4:
-      return 'far-right';
-    default:
-      return 'center';
-  }
-}
-
-/*** Convert one visual trajectory into its approximate player-lane horizontal drift. */
-function trajectoryDriftPercent(trajectory: LetterProjectileSpec['trajectory']) {
-  switch (trajectory) {
-    case 'far-left':
-      return -14;
-    case 'left':
-      return -7;
-    case 'right':
-      return 7;
-    case 'far-right':
-      return 14;
+      return config.projectileFarDriftPercent;
     default:
       return 0;
   }
 }
 
-/*** Clamp a normalized playfield percentage to a visible horizontal projectile range. */
-function clampPercent(value: number) {
-  return Math.min(94, Math.max(6, value));
+/*** Clamp a normalized playfield percentage to the configured projectile range. */
+function clampPercent(value: number, config: GameplayConfig) {
+  return Math.min(config.projectileMaxXPercent, Math.max(config.projectileMinXPercent, value));
 }
-
-const PLAYER_LANE_Y_PERCENT = 86;
-const FALL_DISTANCE_PERCENT = 110;

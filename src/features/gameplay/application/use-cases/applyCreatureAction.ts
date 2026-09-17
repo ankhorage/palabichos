@@ -17,47 +17,23 @@ export function applyCreatureAction(
   if (creature === undefined) return ignoredResult(scene, creatureId);
 
   const isCorrect = action === 'collect' ? creature.matchesTarget : !creature.matchesTarget;
-  if (!isCorrect) return mistakeResult(scene, creatureId);
-
-  return correctResult(scene, creature, action);
-}
-
-/*** Keep a non-actionable scene unchanged. */
-function ignoredResult(scene: GameScene, creatureId: string): CreatureActionResult {
-  return { scene, outcome: 'ignored', creatureId };
-}
-
-/*** Apply one incorrect word decision and enter game over when health reaches zero. */
-function mistakeResult(scene: GameScene, creatureId: string): CreatureActionResult {
-  const health = Math.max(0, scene.health - 1);
-
-  return {
-    scene: {
-      ...scene,
-      health,
-      phase: health === 0 ? 'game-over' : scene.phase,
-    },
-    outcome: 'mistake',
-    creatureId,
-  };
-}
-
-/*** Apply one correct word decision, progress collection, and complete the level at its target. */
-function correctResult(
-  scene: GameScene,
-  creature: CreatureViewModel,
-  action: CreatureAction,
-): CreatureActionResult {
+  const progression = isCorrect ? correctProgression(scene) : mistakeProgression(scene);
   const collectedCount =
-    action === 'collect'
+    action === 'collect' && isCorrect
       ? Math.min(scene.level.targetCount, scene.collectedCount + 1)
       : scene.collectedCount;
-  const phase = collectedCount >= scene.level.targetCount ? 'level-complete' : scene.phase;
+  const phase =
+    progression.health === 0
+      ? 'game-over'
+      : collectedCount >= scene.level.targetCount
+        ? 'level-complete'
+        : scene.phase;
   const replacement = createReplacementCreature(scene);
 
   return {
     scene: {
       ...scene,
+      ...progression,
       collectedCount,
       phase,
       creatures: scene.creatures.map((candidate) =>
@@ -65,8 +41,34 @@ function correctResult(
       ),
       spawnSequence: scene.spawnSequence + 1,
     },
-    outcome: action === 'collect' ? 'collected' : 'destroyed',
-    creatureId: creature.id,
+    outcome: action === 'shoot' ? 'destroyed' : 'collected',
+    creatureId,
+  };
+}
+
+/*** Keep a non-actionable scene unchanged. */
+function ignoredResult(scene: GameScene, creatureId: string): CreatureActionResult {
+  return { scene, outcome: 'ignored', creatureId };
+}
+
+/*** Increment the perfect-action streak and award a configured extra life at its threshold. */
+function correctProgression(scene: GameScene) {
+  const nextStreak = scene.correctStreak + 1;
+  const earnsExtraLife = nextStreak >= scene.gameplayConfig.correctActionsPerExtraLife;
+
+  return {
+    correctStreak: earnsExtraLife ? 0 : nextStreak,
+    health: earnsExtraLife
+      ? Math.min(scene.gameplayConfig.maxHealth, scene.health + 1)
+      : scene.health,
+  };
+}
+
+/*** Apply configured wrong-action damage and reset the perfect-action streak. */
+function mistakeProgression(scene: GameScene) {
+  return {
+    correctStreak: 0,
+    health: Math.max(0, scene.health - scene.gameplayConfig.wrongActionDamage),
   };
 }
 

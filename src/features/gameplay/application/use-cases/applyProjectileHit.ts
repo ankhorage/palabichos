@@ -6,11 +6,12 @@ export function applyProjectileHit(scene: GameScene, invulnerable: boolean): Pro
     return { scene, damaged: false };
   }
 
-  const health = Math.max(0, scene.health - 1);
+  const health = Math.max(0, scene.health - scene.gameplayConfig.projectileDamage);
 
   return {
     scene: {
       ...scene,
+      correctStreak: 0,
       health,
       phase: health === 0 ? 'game-over' : scene.phase,
     },

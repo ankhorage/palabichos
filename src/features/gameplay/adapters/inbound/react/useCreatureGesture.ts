@@ -6,13 +6,17 @@ import {
   useState,
 } from 'react';
 
-import type { CreatureAction, CreatureViewModel } from '../../../../../types/gameplay';
-import { COLLECT_HOLD_MS } from '../../../constants/interaction';
+import type {
+  CreatureAction,
+  CreatureViewModel,
+  GameplayConfig,
+} from '../../../../../types/gameplay';
 
 /*** Bind one creature to a forgiving tap-or-hold pointer gesture controller. */
 export function useCreatureGesture(
   creature: CreatureViewModel,
   onAction: (creature: CreatureViewModel, action: CreatureAction) => void,
+  gameplayConfig: GameplayConfig,
 ) {
   const [holding, setHolding] = useState(false);
   const activePointerIdRef = useRef<number | null>(null);
@@ -39,9 +43,9 @@ export function useCreatureGesture(
       onPointerCancel: (event: ReactPointerEvent<HTMLButtonElement>) =>
         handlePointerCancel(event, state),
       onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) =>
-        handlePointerDown(event, state, creature, onAction),
+        handlePointerDown(event, state, creature, onAction, gameplayConfig.collectHoldMs),
       onPointerMove: (event: ReactPointerEvent<HTMLButtonElement>) =>
-        handlePointerMove(event, state),
+        handlePointerMove(event, state, gameplayConfig.pointerCancelDistancePx),
       onPointerUp: (event: ReactPointerEvent<HTMLButtonElement>) =>
         handlePointerUp(event, state, creature, onAction),
     },
@@ -68,6 +72,7 @@ function handlePointerDown(
   state: CreatureGestureState,
   creature: CreatureViewModel,
   onAction: (creature: CreatureViewModel, action: CreatureAction) => void,
+  collectHoldMs: number,
 ) {
   if (event.button !== 0 || state.activePointerIdRef.current !== null) return;
 
@@ -84,13 +89,14 @@ function handlePointerDown(
     state.holdTimerRef.current = null;
     state.setHolding(false);
     onAction(creature, 'collect');
-  }, COLLECT_HOLD_MS);
+  }, collectHoldMs);
 }
 
 /*** Cancel collection when pointer travel indicates the hold was unintended. */
 function handlePointerMove(
   event: ReactPointerEvent<HTMLButtonElement>,
   state: CreatureGestureState,
+  pointerCancelDistancePx: number,
 ) {
   if (
     state.activePointerIdRef.current !== event.pointerId ||
@@ -103,7 +109,7 @@ function handlePointerMove(
     event.clientX - state.pointerStartRef.current.x,
     event.clientY - state.pointerStartRef.current.y,
   );
-  if (distance <= POINTER_CANCEL_DISTANCE_PX) return;
+  if (distance <= pointerCancelDistancePx) return;
 
   state.cancelledRef.current = true;
   clearHoldTimer(state);
@@ -169,5 +175,3 @@ function releasePointer(event: ReactPointerEvent<HTMLButtonElement>, state: Crea
   state.activePointerIdRef.current = null;
   state.pointerStartRef.current = null;
 }
-
-const POINTER_CANCEL_DISTANCE_PX = 34;

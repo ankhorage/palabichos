@@ -26,22 +26,20 @@ interface GameLifecycleInput extends SceneReplacementContext {
 
 interface SceneReplacementContext {
   readonly resetInvulnerability: () => void;
-  readonly resetPlayer: () => void;
+  readonly resetPlayer: (xPercent?: number) => void;
   readonly sceneRef: MutableRefObject<GameScene>;
   readonly setLetterProjectiles: Dispatch<SetStateAction<readonly LetterProjectileSpec[]>>;
-  readonly setMistakeCreatureId: Dispatch<SetStateAction<string | null>>;
   readonly setScene: Dispatch<SetStateAction<GameScene>>;
   readonly setShot: Dispatch<SetStateAction<ShotViewModel | null>>;
 }
 
-/*** Schedule the short success pause before advancing to the next catalog level. */
+/*** Schedule the configured success pause before advancing to the next catalog level. */
 function useAutomaticLevelAdvance({
   resetInvulnerability,
   resetPlayer,
   scene,
   sceneRef,
   setLetterProjectiles,
-  setMistakeCreatureId,
   setScene,
   setShot,
 }: GameLifecycleInput) {
@@ -57,20 +55,19 @@ function useAutomaticLevelAdvance({
           resetPlayer,
           sceneRef,
           setLetterProjectiles,
-          setMistakeCreatureId,
           setScene,
           setShot,
         }),
-      LEVEL_COMPLETE_VISIBLE_MS,
+      scene.gameplayConfig.levelCompleteVisibleMs,
     );
     return () => clearTransitionTimer(transitionTimerRef);
   }, [
     resetInvulnerability,
     resetPlayer,
+    scene.gameplayConfig.levelCompleteVisibleMs,
     scene.phase,
     sceneRef,
     setLetterProjectiles,
-    setMistakeCreatureId,
     setScene,
     setShot,
   ]);
@@ -86,10 +83,9 @@ function replaceScene(nextScene: GameScene, context: SceneReplacementContext) {
   context.sceneRef.current = nextScene;
   context.setScene(nextScene);
   context.setLetterProjectiles([]);
-  context.setMistakeCreatureId(null);
   context.setShot(null);
   context.resetInvulnerability();
-  context.resetPlayer();
+  context.resetPlayer(nextScene.gameplayConfig.playerStartXPercent);
 }
 
 /*** Clear the pending automatic level transition timeout. */
@@ -98,5 +94,3 @@ function clearTransitionTimer(timerRef: MutableRefObject<number | null>) {
   window.clearTimeout(timerRef.current);
   timerRef.current = null;
 }
-
-const LEVEL_COMPLETE_VISIBLE_MS = 1200;
