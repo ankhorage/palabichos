@@ -3,7 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import { applyCreatureAction } from './applyCreatureAction';
 import { createInitialGameScene } from './createInitialGameScene';
 
-describe('applyCreatureAction', () => {
+describe('applyCreatureAction action outcomes', () => {
   test('collects a matching creature, increments progress and streak, and respawns', () => {
     const scene = createInitialGameScene();
     const result = applyCreatureAction(scene, 'creature-gato', 'collect');
@@ -46,7 +46,9 @@ describe('applyCreatureAction', () => {
     expect(result.scene.spawnSequence).toBe(1);
     expect(result.scene.creatures.some((creature) => creature.id === 'creature-mesa')).toBe(false);
   });
+});
 
+describe('applyCreatureAction progression', () => {
   test('awards one extra life at the configured correct-action threshold and resets streak', () => {
     const initial = createInitialGameScene();
     const scene = {
