@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 
-import type { CreatureViewModel, GameScene } from '../../../../types/gameplay';
+import type {
+  CreatureActionResult,
+  CreatureViewModel,
+  GameScene,
+} from '../../../../types/gameplay';
+import { getDistractorCategoryId } from '../../utils/getDistractorCategoryId';
 import { applyCreatureAction } from './applyCreatureAction';
 import { createGameScene } from './createGameScene';
 
@@ -50,22 +55,69 @@ describe('applyCreatureAction active field', () => {
     ).toBe(true);
   });
 
-  test('retires the oldest distractor neutrally every four correct target shots', () => {
-    const initial = createGameScene('animals');
-    const oldestDistractor = initial.creatures
-      .filter((creature) => !creature.matchesTarget)
-      .reduce((oldest, creature) =>
-        creature.spawnSequence < oldest.spawnSequence ? creature : oldest,
-      );
-    const firstThree = shootTargets(initial, 3);
-    const fourthTarget = requireCreature(firstThree, true);
-    const result = applyCreatureAction(firstThree, fourthTarget.id);
+  test('ages surviving distractors on every successful target shot', () => {
+    const initial = createGameScene('animals', 0, 0.37);
+    const target = requireCreature(initial, true);
+    const result = applyCreatureAction(initial, target.id);
+    const distractors = result.scene.creatures.filter((creature) => !creature.matchesTarget);
 
-    expect(result.retiredCreature?.id).toBe(oldestDistractor.id);
-    expect(result.scene.health).toBe(initial.health);
-    expect(result.scene.collectedCount).toBe(4);
-    expect(result.vocabWord?.id).toBe(fourthTarget.word.id);
-    expect(result.scene.usedWordIds).toContain(oldestDistractor.word.id);
+    expect(result.retiredCreature).toBeNull();
+    expect(distractors.every((creature) => creature.ageInCorrectShots === 1)).toBe(true);
+  });
+
+  test('rotates eligible distractors at varied ages before they become stale', () => {
+    const initial = createGameScene('animals', 0, 0.37);
+    const results = playCorrectShotResults(initial, 17);
+    const retirements = results
+      .map((result, index) => ({ creature: result.retiredCreature, shotNumber: index + 1 }))
+      .filter((entry) => entry.creature !== null);
+    const retirementGaps = retirements
+      .slice(1)
+      .map((entry, index) => entry.shotNumber - (retirements[index]?.shotNumber ?? 0));
+
+    expect(retirements.length).toBeGreaterThan(5);
+    expect(
+      retirements.every(
+        ({ creature }) =>
+          creature !== null &&
+          creature.ageInCorrectShots >= initial.gameplayConfig.distractorRetireMinAgeCorrectShots &&
+          creature.ageInCorrectShots <= initial.gameplayConfig.distractorRetireMaxAgeCorrectShots,
+      ),
+    ).toBe(true);
+    expect(new Set(retirementGaps).size).toBeGreaterThan(1);
+    expect(
+      results.every((result) =>
+        result.scene.creatures
+          .filter((creature) => !creature.matchesTarget)
+          .every(
+            (creature) =>
+              creature.ageInCorrectShots <=
+              result.scene.gameplayConfig.distractorRetireMaxAgeCorrectShots,
+          ),
+      ),
+    ).toBe(true);
+  });
+
+  test('keeps active distractor categories diverse through churn', () => {
+    const results = playCorrectShotResults(createGameScene('animals', 0, 0.37), 12);
+
+    expect(results.every((result) => hasDistinctDistractorCategories(result.scene))).toBe(true);
+  });
+
+  test('moves churn replacements away from the retired presentation region when possible', () => {
+    const result = playCorrectShotResults(createGameScene('animals', 0, 0.37), 6).find(
+      (candidate) => candidate.retiredCreature !== null,
+    );
+
+    expect(result).toBeDefined();
+    if (result?.retiredCreature === null || result === undefined) return;
+    const newestDistractor = result.scene.creatures
+      .filter((creature) => !creature.matchesTarget)
+      .reduce((newest, creature) =>
+        creature.spawnSequence > newest.spawnSequence ? creature : newest,
+      );
+
+    expect(createRegionKey(newestDistractor)).not.toBe(createRegionKey(result.retiredCreature));
   });
 
   test('keeps active creature positions at the configured minimum distance', () => {
@@ -101,20 +153,20 @@ describe('applyCreatureAction round progression', () => {
 
 /*** Return sequential scenes produced by correct target shots for invariant assertions. */
 function playCorrectShots(scene: GameScene, shotCount: number): readonly GameScene[] {
-  return Array.from({ length: shotCount }).reduce<readonly GameScene[]>((scenes) => {
-    const current = scenes.at(-1) ?? scene;
-    if (current.phase !== 'playing') return scenes;
-    const creature = requireCreature(current, true);
-    return [...scenes, applyCreatureAction(current, creature.id).scene];
-  }, []);
+  return playCorrectShotResults(scene, shotCount).map((result) => result.scene);
 }
 
-/*** Apply a fixed number of correct target shots and return the resulting scene. */
-function shootTargets(scene: GameScene, shotCount: number): GameScene {
-  return Array.from({ length: shotCount }).reduce<GameScene>((current) => {
+/*** Return sequential action results produced by correct target shots. */
+function playCorrectShotResults(
+  scene: GameScene,
+  shotCount: number,
+): readonly CreatureActionResult[] {
+  return Array.from({ length: shotCount }).reduce<readonly CreatureActionResult[]>((results) => {
+    const current = results.at(-1)?.scene ?? scene;
+    if (current.phase !== 'playing') return results;
     const creature = requireCreature(current, true);
-    return applyCreatureAction(current, creature.id).scene;
-  }, scene);
+    return [...results, applyCreatureAction(current, creature.id)];
+  }, []);
 }
 
 /*** Return whether every active creature pair keeps the configured minimum presentation distance. */
@@ -128,6 +180,22 @@ function hasReadableCreatureSpacing(scene: GameScene) {
           scene.gameplayConfig.creatureMinimumDistancePercent,
       ),
   );
+}
+
+/*** Return whether all active distractors currently represent different source categories. */
+function hasDistinctDistractorCategories(scene: GameScene) {
+  const categoryIds = scene.creatures
+    .filter((creature) => !creature.matchesTarget)
+    .flatMap((creature) => {
+      const categoryId = getDistractorCategoryId(creature.word, scene.level.targetCategoryId);
+      return categoryId === null ? [] : [categoryId];
+    });
+  return new Set(categoryIds).size === categoryIds.length;
+}
+
+/*** Build one broad presentation-region key for movement assertions. */
+function createRegionKey(position: { readonly xPercent: number; readonly yPercent: number }) {
+  return `${position.xPercent < 50 ? 'left' : 'right'}-${position.yPercent < 45 ? 'top' : 'bottom'}`;
 }
 
 /*** Finish one round by repeatedly shooting the first active target. */
