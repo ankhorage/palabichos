@@ -1,8 +1,8 @@
 import type {
   CreatureAction,
   CreatureActionResult,
-  GameScene,
   GameplayConfig,
+  GameScene,
 } from '../../../../types/gameplay';
 import type { VocabularyWord } from '../../../../types/vocabulary';
 import { createCreatureViewModel } from './createCreatureViewModel';
