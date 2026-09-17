@@ -4,6 +4,7 @@ import {
   type SetStateAction,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -98,7 +99,10 @@ function useHitTimers(): HitTimers {
   const hitStop = useRef<number | null>(null);
   const invulnerability = useRef<number | null>(null);
   const respawn = useRef<number | null>(null);
-  return { finish, hitStop, invulnerability, respawn };
+  return useMemo(
+    () => ({ finish, hitStop, invulnerability, respawn }),
+    [finish, hitStop, invulnerability, respawn],
+  );
 }
 
 /*** Resolve one lane crossing against the current configured player hitbox. */
@@ -108,7 +112,10 @@ function resolveLaneCrossing(
   context: HitContext,
 ) {
   const scene = context.sceneRef.current;
-  if (Math.abs(impactXPercent - context.playerXRef.current) > scene.gameplayConfig.playerHitRadiusPercent) {
+  if (
+    Math.abs(impactXPercent - context.playerXRef.current) >
+    scene.gameplayConfig.playerHitRadiusPercent
+  ) {
     return;
   }
 
