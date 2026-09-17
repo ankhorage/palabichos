@@ -18,7 +18,7 @@ import { applyCreatureAction } from '../../../application/use-cases/applyCreatur
 import { createCreatureResolution } from '../../../application/use-cases/createCreatureResolution';
 import { createLetterProjectiles } from '../../../application/use-cases/createLetterProjectiles';
 
-/*** Delay every creature consequence behind one calm translated feedback phase. */
+/*** Delay every creature consequence behind one translated action-feedback phase. */
 export function useCreatureResolution(input: CreatureResolutionInput) {
   const [resolution, setResolution] = useState<CreatureResolution | null>(null);
   const resolutionRef = useRef<CreatureResolution | null>(null);
@@ -43,10 +43,8 @@ export function useCreatureResolution(input: CreatureResolutionInput) {
 
 interface CreatureResolutionInput {
   readonly letterSequenceRef: MutableRefObject<number>;
-  readonly mistakeTimerRef: MutableRefObject<number | null>;
   readonly sceneRef: MutableRefObject<GameScene>;
   readonly setLetterProjectiles: Dispatch<SetStateAction<readonly LetterProjectileSpec[]>>;
-  readonly setMistakeCreatureId: Dispatch<SetStateAction<string | null>>;
   readonly setScene: Dispatch<SetStateAction<GameScene>>;
 }
 
@@ -83,7 +81,7 @@ function beginCreatureResolution(
   return true;
 }
 
-/*** Commit the delayed action, then trigger its physical projectile or mistake consequence. */
+/*** Commit the delayed action, then trigger its physical projectile consequence. */
 function completeCreatureResolution(
   creature: CreatureViewModel,
   resolution: CreatureResolution,
@@ -94,9 +92,6 @@ function completeCreatureResolution(
   context.sceneRef.current = result.scene;
   context.setScene(result.scene);
   if (resolution.action === 'shoot') emitLetterProjectiles(creature, scene, context);
-  if (result.outcome === 'mistake' && resolution.action === 'collect') {
-    showMistake(creature.id, context);
-  }
   context.resolutionRef.current = null;
   context.setResolution(null);
   context.timerRef.current = null;
@@ -115,16 +110,6 @@ function emitLetterProjectiles(
     scene.gameplayConfig,
   );
   context.setLetterProjectiles((current) => [...current, ...projectiles]);
-}
-
-/*** Show the existing short mistake shake after a wrong collect completes. */
-function showMistake(creatureId: string, context: CreatureResolutionContext) {
-  context.setMistakeCreatureId(creatureId);
-  clearTimer(context.mistakeTimerRef);
-  context.mistakeTimerRef.current = window.setTimeout(
-    () => context.setMistakeCreatureId(null),
-    context.sceneRef.current.gameplayConfig.mistakeVisibleMs,
-  );
 }
 
 /*** Clear one optional browser timeout. */
