@@ -6,7 +6,7 @@ import { advanceGameScene } from './advanceGameScene';
 import { createGameScene } from './createGameScene';
 import { restartGameScene } from './restartGameScene';
 
-describe('game lifecycle', () => {
+describe('game lifecycle category cycles', () => {
   test('plays every playable category once before starting a new category cycle', () => {
     const initial = createGameScene('animals', 0, 0.75);
     const playable = getPlayableVocabularyCategories(initial.gameplayConfig.roundTargetCount);
@@ -40,7 +40,9 @@ describe('game lifecycle', () => {
     expect(nextCycle.playedCategoryIds).toEqual([nextCycle.level.targetCategoryId]);
     expect(nextCycle.levelIndex).toBe(playable.length);
   });
+});
 
+describe('game lifecycle restart', () => {
   test('restarts the current category and preserves its category-cycle history', () => {
     const initial = createGameScene('food', 3, 0.75, ['animals', 'food']);
     const restarted = restartGameScene({
