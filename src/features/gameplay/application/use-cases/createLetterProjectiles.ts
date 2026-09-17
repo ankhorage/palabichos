@@ -4,7 +4,7 @@ import type {
   LetterProjectileSpec,
 } from '../../../../types/gameplay';
 
-/*** Split one destroyed word translation into deterministic readable letter projectile specifications. */
+/*** Split one destroyed word translation into deterministic configured letter projectiles. */
 export function createLetterProjectiles(
   creature: CreatureViewModel,
   sequence: number,
@@ -14,7 +14,7 @@ export function createLetterProjectiles(
   const centerOffset = (letters.length - 1) / 2;
 
   return letters.map((letter, index) => {
-    const trajectory = trajectoryForIndex(index);
+    const driftPercent = driftPercentForIndex(index, config);
     const startXPercent = clampPercent(
       creature.xPercent + (index - centerOffset) * config.projectileLetterSpacingPercent,
       config,
@@ -34,47 +34,26 @@ export function createLetterProjectiles(
       letter,
       startXPercent,
       startYPercent: creature.yPercent,
-      trajectory,
+      driftPercent,
+      fallDistancePercent: config.projectileFallDistancePercent,
       durationMs,
       delayMs,
-      impactXPercent: clampPercent(
-        startXPercent + trajectoryDriftPercent(trajectory, config),
-        config,
-      ),
+      impactXPercent: clampPercent(startXPercent + driftPercent, config),
       impactDelayMs: delayMs + Math.round(durationMs * impactProgress),
     };
   });
 }
 
-/*** Map a letter position to one of five calm horizontal fall trajectories. */
-function trajectoryForIndex(index: number): LetterProjectileSpec['trajectory'] {
+/*** Select one of five configured horizontal drifts for a letter position. */
+function driftPercentForIndex(index: number, config: GameplayConfig) {
   switch (index % 5) {
     case 0:
-      return 'far-left';
-    case 1:
-      return 'left';
-    case 3:
-      return 'right';
-    case 4:
-      return 'far-right';
-    default:
-      return 'center';
-  }
-}
-
-/*** Convert one visual trajectory into its configured player-lane horizontal drift. */
-function trajectoryDriftPercent(
-  trajectory: LetterProjectileSpec['trajectory'],
-  config: GameplayConfig,
-) {
-  switch (trajectory) {
-    case 'far-left':
       return -config.projectileFarDriftPercent;
-    case 'left':
+    case 1:
       return -config.projectileNearDriftPercent;
-    case 'right':
+    case 3:
       return config.projectileNearDriftPercent;
-    case 'far-right':
+    case 4:
       return config.projectileFarDriftPercent;
     default:
       return 0;
