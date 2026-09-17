@@ -4,7 +4,7 @@ import type {
   CreatureViewModel,
 } from '../../../../types/gameplay';
 
-/*** Build the semantic feedback shown before one creature action is committed. */
+/*** Build the semantic feedback shown before one creature shot is committed. */
 export function createCreatureResolution(
   creature: CreatureViewModel,
   action: CreatureAction,
@@ -16,6 +16,6 @@ export function createCreatureResolution(
     action,
     translation: creature.word.translation,
     matchesTarget: creature.matchesTarget,
-    isCorrect: action === 'collect' ? creature.matchesTarget : !creature.matchesTarget,
+    isCorrect: creature.matchesTarget,
   };
 }
