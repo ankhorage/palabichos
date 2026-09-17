@@ -19,7 +19,8 @@ export function createLetterProjectiles(
       creature.xPercent + (index - centerOffset) * config.projectileLetterSpacingPercent,
       config,
     );
-    const durationMs = config.projectileBaseDurationMs + (index % 3) * config.projectileDurationStepMs;
+    const durationMs =
+      config.projectileBaseDurationMs + (index % 3) * config.projectileDurationStepMs;
     const delayMs = index * config.projectileDelayStepMs;
     const impactProgress = Math.min(
       config.projectileMaxImpactProgress,
