@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import { getPlayableVocabularyCategories } from '../../../vocabulary/application/use-cases/getPlayableVocabularyCategories';
+import { getVocabularyWordsForCategory } from '../../../vocabulary/application/use-cases/getVocabularyWordsForCategory';
 import { VOCABULARY_CATEGORIES } from '../../../vocabulary/constants/categories';
 import { VOCABULARY_WORDS } from '../../../vocabulary/constants/words';
 import { createInitialGameScene } from './createInitialGameScene';
@@ -13,10 +14,7 @@ describe('game scene catalog', () => {
     expect(VOCABULARY_WORDS).toHaveLength(480);
     expect(playable.length).toBeGreaterThanOrEqual(16);
     expect(
-      playable.every(
-        (category) =>
-          VOCABULARY_WORDS.filter((word) => word.categoryIds.includes(category.id)).length >= 20,
-      ),
+      playable.every((category) => getVocabularyWordsForCategory(category.id).length >= 20),
     ).toBe(true);
   });
 
