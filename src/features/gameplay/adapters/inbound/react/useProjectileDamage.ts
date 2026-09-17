@@ -106,11 +106,7 @@ function useHitTimers(): HitTimers {
 }
 
 /*** Resolve one lane crossing against the current configured player hitbox. */
-function resolveLaneCrossing(
-  projectileId: string,
-  impactXPercent: number,
-  context: HitContext,
-) {
+function resolveLaneCrossing(projectileId: string, impactXPercent: number, context: HitContext) {
   const scene = context.sceneRef.current;
   if (
     Math.abs(impactXPercent - context.playerXRef.current) >
