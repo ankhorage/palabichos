@@ -31,7 +31,8 @@ export function applyCreatureAction(
     phase,
     resolvedWordIds,
   };
-  const nextScene = phase === 'playing' ? refreshBoard(progressedScene, randomValue) : progressedScene;
+  const nextScene =
+    phase === 'playing' ? refreshBoard(progressedScene, randomValue) : progressedScene;
 
   return {
     scene: nextScene,
