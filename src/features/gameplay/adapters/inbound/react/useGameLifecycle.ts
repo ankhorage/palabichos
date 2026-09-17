@@ -26,7 +26,7 @@ interface GameLifecycleInput extends SceneReplacementContext {
 
 interface SceneReplacementContext {
   readonly resetInvulnerability: () => void;
-  readonly resetPlayer: () => void;
+  readonly resetPlayer: (xPercent?: number) => void;
   readonly sceneRef: MutableRefObject<GameScene>;
   readonly setLetterProjectiles: Dispatch<SetStateAction<readonly LetterProjectileSpec[]>>;
   readonly setScene: Dispatch<SetStateAction<GameScene>>;
@@ -85,7 +85,7 @@ function replaceScene(nextScene: GameScene, context: SceneReplacementContext) {
   context.setLetterProjectiles([]);
   context.setShot(null);
   context.resetInvulnerability();
-  context.resetPlayer();
+  context.resetPlayer(nextScene.gameplayConfig.playerStartXPercent);
 }
 
 /*** Clear the pending automatic level transition timeout. */
