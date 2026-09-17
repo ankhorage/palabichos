@@ -4,6 +4,7 @@ import type {
   GameScene,
 } from '../../../../types/gameplay';
 import type { VocabularyWord } from '../../../../types/vocabulary';
+import { getDistractorCategoryId } from '../../utils/getDistractorCategoryId';
 import { createCreatureViewModel } from './createCreatureViewModel';
 
 /*** Apply one creature shot and return the next immutable gameplay scene. */
@@ -30,10 +31,12 @@ export function applyCreatureAction(scene: GameScene, creatureId: string): Creat
     collectedCount,
     phase,
   };
-  const replacedScene = replaceCreature(progressedScene, creature.id, creature.matchesTarget);
-  const retirement = shouldRetireDistractor(replacedScene, isCorrect)
-    ? retireOldestDistractor(replacedScene)
-    : { scene: replacedScene, retiredCreature: null };
+  const agedScene = isCorrect ? ageActiveDistractors(progressedScene) : progressedScene;
+  const replacedScene = replaceCreature(agedScene, creature.id, creature.matchesTarget, creature);
+  const retirement =
+    isCorrect && replacedScene.phase === 'playing'
+      ? retireEligibleDistractor(replacedScene)
+      : { scene: replacedScene, retiredCreature: null };
 
   return {
     scene: retirement.scene,
@@ -55,9 +58,26 @@ function ignoredResult(scene: GameScene, creatureId: string): CreatureActionResu
   };
 }
 
+/*** Increment the age of every distractor that survives one successful target shot. */
+function ageActiveDistractors(scene: GameScene): GameScene {
+  return {
+    ...scene,
+    creatures: scene.creatures.map((creature) =>
+      creature.matchesTarget
+        ? creature
+        : { ...creature, ageInCorrectShots: creature.ageInCorrectShots + 1 },
+    ),
+  };
+}
+
 /*** Replace one active creature with an unused word of the same answer class. */
-function replaceCreature(scene: GameScene, creatureId: string, matchesTarget: boolean): GameScene {
-  const replacementWord = selectReplacementWord(scene, matchesTarget);
+function replaceCreature(
+  scene: GameScene,
+  creatureId: string,
+  matchesTarget: boolean,
+  avoidPosition: { readonly xPercent: number; readonly yPercent: number } | null,
+): GameScene {
+  const replacementWord = selectReplacementWord(scene, matchesTarget, creatureId);
   const occupiedCreatures = scene.creatures.filter((creature) => creature.id !== creatureId);
   const replacement = createCreatureViewModel(
     replacementWord,
@@ -66,7 +86,11 @@ function replaceCreature(scene: GameScene, creatureId: string, matchesTarget: bo
     scene.presentationSeed,
     occupiedCreatures,
     scene.gameplayConfig.creatureMinimumDistancePercent,
+    avoidPosition,
   );
+  const recentDistractorCategoryIds = matchesTarget
+    ? scene.recentDistractorCategoryIds
+    : appendRecentDistractorCategory(scene, replacementWord);
 
   return {
     ...scene,
@@ -76,17 +100,8 @@ function replaceCreature(scene: GameScene, creatureId: string, matchesTarget: bo
     remainingWords: scene.remainingWords.filter((word) => word.id !== replacementWord.id),
     usedWordIds: [...scene.usedWordIds, replacementWord.id],
     spawnSequence: scene.spawnSequence + 1,
+    recentDistractorCategoryIds,
   };
-}
-
-/*** Return whether this successful shot reaches the configured neutral distractor-rotation cadence. */
-function shouldRetireDistractor(scene: GameScene, isCorrect: boolean) {
-  return (
-    isCorrect &&
-    scene.phase === 'playing' &&
-    scene.collectedCount > 0 &&
-    scene.collectedCount % scene.gameplayConfig.distractorRetireEveryCorrectShots === 0
-  );
 }
 
 interface DistractorRetirement {
@@ -94,28 +109,61 @@ interface DistractorRetirement {
   readonly retiredCreature: CreatureViewModel | null;
 }
 
-/*** Retire the oldest active distractor and replace it neutrally with a fresh distractor. */
-function retireOldestDistractor(scene: GameScene): DistractorRetirement {
-  const distractors = scene.creatures.filter((creature) => !creature.matchesTarget);
-  const retiredCreature = distractors.reduce<CreatureViewModel | null>(
-    (oldest, creature) =>
-      oldest === null || creature.spawnSequence < oldest.spawnSequence ? creature : oldest,
-    null,
-  );
-
+/*** Retire the oldest eligible distractor according to its deterministic age threshold. */
+function retireEligibleDistractor(scene: GameScene): DistractorRetirement {
+  const retiredCreature = selectDistractorForRetirement(scene);
   if (retiredCreature === null) return { scene, retiredCreature: null };
 
   return {
-    scene: replaceCreature(scene, retiredCreature.id, false),
+    scene: replaceCreature(scene, retiredCreature.id, false, retiredCreature),
     retiredCreature,
   };
 }
 
-/*** Select the next unused round word from the required answer class. */
-function selectReplacementWord(scene: GameScene, matchesTarget: boolean): VocabularyWord {
-  const word = scene.remainingWords.find(
+/*** Select the oldest distractor whose age has reached its configured lifetime. */
+function selectDistractorForRetirement(scene: GameScene): CreatureViewModel | null {
+  const eligible = scene.creatures.filter(
+    (creature) =>
+      !creature.matchesTarget && creature.ageInCorrectShots >= createRetirementAge(scene, creature),
+  );
+  const forced = eligible.filter(
+    (creature) => creature.ageInCorrectShots >= scene.gameplayConfig.distractorRetireMaxAgeCorrectShots,
+  );
+  const candidates = forced.length > 0 ? forced : eligible;
+
+  return candidates.reduce<CreatureViewModel | null>(
+    (oldest, creature) =>
+      oldest === null ||
+      creature.ageInCorrectShots > oldest.ageInCorrectShots ||
+      (creature.ageInCorrectShots === oldest.ageInCorrectShots &&
+        creature.spawnSequence < oldest.spawnSequence)
+        ? creature
+        : oldest,
+    null,
+  );
+}
+
+/*** Derive one stable lifetime between configured min and max ages from round and spawn identity. */
+function createRetirementAge(scene: GameScene, creature: CreatureViewModel) {
+  const minimum = scene.gameplayConfig.distractorRetireMinAgeCorrectShots;
+  const maximum = scene.gameplayConfig.distractorRetireMaxAgeCorrectShots;
+  const range = maximum - minimum + 1;
+  const seedOffset = Math.floor(Math.min(0.999999, Math.max(0, scene.presentationSeed)) * 1000);
+  return minimum + ((creature.spawnSequence + seedOffset) % range);
+}
+
+/*** Select the next unused round word while preserving answer class and distractor freshness. */
+function selectReplacementWord(
+  scene: GameScene,
+  matchesTarget: boolean,
+  replacedCreatureId: string,
+): VocabularyWord {
+  const candidates = scene.remainingWords.filter(
     (candidate) => candidate.categoryIds.includes(scene.level.targetCategoryId) === matchesTarget,
   );
+  const word = matchesTarget
+    ? candidates[0]
+    : selectFreshDistractorWord(scene, candidates, replacedCreatureId);
 
   if (word === undefined) {
     throw new Error(
@@ -124,6 +172,53 @@ function selectReplacementWord(scene: GameScene, matchesTarget: boolean): Vocabu
   }
 
   return word;
+}
+
+/*** Prefer a distractor category that is neither currently active nor recently represented. */
+function selectFreshDistractorWord(
+  scene: GameScene,
+  candidates: readonly VocabularyWord[],
+  replacedCreatureId: string,
+) {
+  const activeCategoryIds = scene.creatures
+    .filter((creature) => !creature.matchesTarget && creature.id !== replacedCreatureId)
+    .flatMap((creature) => {
+      const categoryId = getDistractorCategoryId(creature.word, scene.level.targetCategoryId);
+      return categoryId === null ? [] : [categoryId];
+    });
+  const isFresh = (word: VocabularyWord) => {
+    const categoryId = getDistractorCategoryId(word, scene.level.targetCategoryId);
+    return (
+      categoryId !== null &&
+      !activeCategoryIds.includes(categoryId) &&
+      !scene.recentDistractorCategoryIds.includes(categoryId)
+    );
+  };
+  const isNotActive = (word: VocabularyWord) => {
+    const categoryId = getDistractorCategoryId(word, scene.level.targetCategoryId);
+    return categoryId !== null && !activeCategoryIds.includes(categoryId);
+  };
+  const isNotRecent = (word: VocabularyWord) => {
+    const categoryId = getDistractorCategoryId(word, scene.level.targetCategoryId);
+    return categoryId !== null && !scene.recentDistractorCategoryIds.includes(categoryId);
+  };
+
+  return (
+    candidates.find(isFresh) ??
+    candidates.find(isNotActive) ??
+    candidates.find(isNotRecent) ??
+    candidates[0]
+  );
+}
+
+/*** Append one replacement category to the bounded recent-distractor history. */
+function appendRecentDistractorCategory(scene: GameScene, word: VocabularyWord) {
+  const categoryId = getDistractorCategoryId(word, scene.level.targetCategoryId);
+  if (categoryId === null) return scene.recentDistractorCategoryIds;
+
+  return [...scene.recentDistractorCategoryIds, categoryId].slice(
+    -scene.gameplayConfig.distractorRecentCategoryWindow,
+  );
 }
 
 /*** Increment the perfect-action streak and award a configured extra life at its threshold. */
