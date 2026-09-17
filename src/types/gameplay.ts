@@ -64,7 +64,7 @@ export interface GameplayConfig {
   readonly playerRespawnBlinkMs: number;
 }
 
-export interface LevelDefinition {
+interface LevelDefinition {
   readonly id: string;
   readonly number: number;
   readonly title: string;
