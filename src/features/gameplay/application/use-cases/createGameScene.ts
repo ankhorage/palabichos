@@ -99,7 +99,9 @@ function selectInitialWords(
   distractorWords: readonly VocabularyWord[],
   config: GameplayConfig,
 ): readonly VocabularyWord[] {
-  const selection = Array.from({ length: config.initialCreatureCount }).reduce<InitialWordSelection>(
+  const selection = Array.from({
+    length: config.initialCreatureCount,
+  }).reduce<InitialWordSelection>(
     (state, _, sequence) => {
       const targetPreferred = shouldSelectTarget(sequence, config);
       const word = selectUnusedWord(
@@ -157,13 +159,16 @@ function diversifyDistractorWords(
   );
   const interleaved = Array.from({ length: maxCategorySize }).flatMap((_, wordIndex) =>
     categoryIds.flatMap((categoryId) => {
-      const word = words.filter((candidate) => candidate.categoryIds.includes(categoryId))[wordIndex];
+      const word = words
+        .filter((candidate) => candidate.categoryIds.includes(categoryId))
+        .at(wordIndex);
       return word === undefined ? [] : [word];
     }),
   );
 
   return interleaved.reduce<readonly VocabularyWord[]>(
-    (unique, word) => (unique.some((candidate) => candidate.id === word.id) ? unique : [...unique, word]),
+    (unique, word) =>
+      unique.some((candidate) => candidate.id === word.id) ? unique : [...unique, word],
     [],
   );
 }
