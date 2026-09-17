@@ -89,7 +89,7 @@ function completeCreatureResolution(
   context: CreatureResolutionContext,
 ) {
   const scene = context.sceneRef.current;
-  const result = applyCreatureAction(scene, creature.id, resolution.action);
+  const result = applyCreatureAction(scene, creature.id);
   context.sceneRef.current = result.scene;
   context.setScene(result.scene);
   if (result.vocabWord !== null) context.onCorrectWordResolved(result.vocabWord.id);
