@@ -9,20 +9,18 @@ import type {
 } from '../../../../../types/gameplay';
 import { useCreatureResolution } from './useCreatureResolution';
 import { useGameLifecycle } from './useGameLifecycle';
+import { usePlayerMovement } from './usePlayerMovement';
 import { useProjectileDamage } from './useProjectileDamage';
 
-/*** Own mutable React feedback while delegating gameplay decisions to pure application use cases. */
-export function useGameInteraction(
-  initialScene: GameScene,
-  playerXPercent: number,
-  resetPlayer: () => void,
-) {
+/*** Own browser gameplay adapters while delegating decisions to pure application use cases. */
+export function useGameInteraction(initialScene: GameScene) {
   const [scene, setScene] = useState(initialScene);
+  const movement = usePlayerMovement(scene.gameplayConfig, scene.phase === 'playing');
   const feedback = useTransientFeedbackState();
   const runtime = useInteractionRuntime(initialScene);
   const damage = useProjectileDamage({
-    playerXPercent,
-    resetPlayer,
+    playerXPercent: movement.xPercent,
+    resetPlayer: movement.reset,
     sceneRef: runtime.sceneRef,
     setLetterProjectiles: feedback.setLetterProjectiles,
     setScene,
@@ -37,7 +35,7 @@ export function useGameInteraction(
   });
   const lifecycle = useGameLifecycle({
     resetInvulnerability: damage.resetInvulnerability,
-    resetPlayer,
+    resetPlayer: movement.reset,
     scene,
     sceneRef: runtime.sceneRef,
     setLetterProjectiles: feedback.setLetterProjectiles,
@@ -45,13 +43,20 @@ export function useGameInteraction(
     setScene,
     setShot: feedback.setShot,
   });
-  const context = createInteractionContext({ feedback, playerXPercent, resolution, runtime });
+  const context = createInteractionContext({
+    feedback,
+    playerXPercent: movement.xPercent,
+    resolution,
+    runtime,
+  });
 
   return {
     ...damage,
     ...lifecycle,
     letterProjectiles: feedback.letterProjectiles,
     mistakeCreatureId: feedback.mistakeCreatureId,
+    movementHandlers: movement.handlers,
+    playerXPercent: movement.xPercent,
     resolution: resolution.resolution,
     scene,
     shot: feedback.shot,
