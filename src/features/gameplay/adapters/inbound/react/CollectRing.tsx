@@ -1,7 +1,5 @@
-import { COLLECT_HOLD_MS } from '../../../constants/interaction';
-
 /*** Render the hold-to-collect progress ring around an active word creature. */
-export function CollectRing({ active }: CollectRingProps) {
+export function CollectRing({ active, durationMs }: CollectRingProps) {
   return (
     <svg className="collect-ring" viewBox="0 0 64 64" aria-hidden="true">
       <circle className="collect-ring-track" cx="32" cy="32" r="28" />
@@ -11,7 +9,7 @@ export function CollectRing({ active }: CollectRingProps) {
           cx="32"
           cy="32"
           r="28"
-          style={{ animationDuration: `${COLLECT_HOLD_MS}ms` }}
+          style={{ animationDuration: `${durationMs}ms` }}
         />
       ) : null}
     </svg>
@@ -20,4 +18,5 @@ export function CollectRing({ active }: CollectRingProps) {
 
 interface CollectRingProps {
   readonly active: boolean;
+  readonly durationMs: number;
 }
