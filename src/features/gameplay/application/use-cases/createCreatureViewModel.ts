@@ -89,7 +89,10 @@ function isSameRegion(
   first: { readonly xPercent: number; readonly yPercent: number },
   second: { readonly xPercent: number; readonly yPercent: number },
 ) {
-  return (first.xPercent < 50) === (second.xPercent < 50) && (first.yPercent < 45) === (second.yPercent < 45);
+  return (
+    first.xPercent < 50 === second.xPercent < 50 &&
+    first.yPercent < 45 === second.yPercent < 45
+  );
 }
 
 /*** Convert one round random seed into a stable presentation-slot offset. */
