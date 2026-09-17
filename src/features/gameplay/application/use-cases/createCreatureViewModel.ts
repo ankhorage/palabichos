@@ -1,5 +1,6 @@
 import type { CreatureViewModel } from '../../../../types/gameplay';
 import type { VocabularyWord } from '../../../../types/vocabulary';
+import { isSameCreatureRegion } from '../../utils/isSameCreatureRegion';
 
 /*** Build creature presentation independently from vocabulary identity and answer correctness. */
 export function createCreatureViewModel(
@@ -9,12 +10,14 @@ export function createCreatureViewModel(
   presentationSeed = 0,
   occupiedCreatures: readonly CreatureViewModel[] = [],
   minimumDistancePercent = 0,
+  avoidPosition: { readonly xPercent: number; readonly yPercent: number } | null = null,
 ): CreatureViewModel {
   const position = selectPosition(
     sequence,
     presentationSeed,
     occupiedCreatures,
     minimumDistancePercent,
+    avoidPosition,
   );
   const variant = VARIANTS[sequence % VARIANTS.length];
   const motion = MOTIONS[sequence % MOTIONS.length];
@@ -28,6 +31,7 @@ export function createCreatureViewModel(
     word,
     matchesTarget: word.categoryIds.includes(targetCategoryId),
     spawnSequence: sequence,
+    ageInCorrectShots: 0,
     xPercent: position.xPercent,
     yPercent: position.yPercent,
     variant,
@@ -37,12 +41,13 @@ export function createCreatureViewModel(
   };
 }
 
-/*** Select the first deterministic presentation slot with enough distance from active creatures. */
+/*** Select a deterministic readable slot while preferring a different region from the retired slot. */
 function selectPosition(
   sequence: number,
   presentationSeed: number,
   occupiedCreatures: readonly CreatureViewModel[],
   minimumDistancePercent: number,
+  avoidPosition: { readonly xPercent: number; readonly yPercent: number } | null,
 ): CreaturePosition {
   const positionOffset = createPositionOffset(presentationSeed);
   const startIndex = (sequence + positionOffset) % POSITIONS.length;
@@ -50,9 +55,14 @@ function selectPosition(
     { length: POSITIONS.length },
     (_, offset) => POSITIONS[(startIndex + offset) % POSITIONS.length] ?? POSITIONS[0],
   );
-  const position = candidates.find((candidate) =>
+  const available = candidates.filter((candidate) =>
     isPositionAvailable(candidate, occupiedCreatures, minimumDistancePercent),
   );
+  const position =
+    avoidPosition === null
+      ? available.at(0)
+      : (available.find((candidate) => !isSameCreatureRegion(candidate, avoidPosition)) ??
+        available.at(0));
 
   if (position === undefined) {
     throw new Error('Creature presentation cannot find a readable free position.');
