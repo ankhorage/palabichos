@@ -6,14 +6,22 @@ import {
   useState,
 } from 'react';
 
-/*** Bind touch, mouse, trackpad, and keyboard input to calm horizontal player movement. */
-export function usePlayerMovement(enabled = true) {
-  const [xPercent, setXPercent] = useState(PLAYER_START_X_PERCENT);
-  const pointerIdRef = useRef<number | null>(null);
-  const context: PlayerMovementContext = { pointerIdRef, setXPercent };
-  const reset = useCallback(() => setXPercent(PLAYER_START_X_PERCENT), []);
+import type { GameplayConfig } from '../../../../../types/gameplay';
 
-  useEffect(() => bindKeyboardMovement(enabled, setXPercent), [enabled]);
+/*** Bind touch, mouse, trackpad, and keyboard input to calm horizontal player movement. */
+export function usePlayerMovement(gameplayConfig: GameplayConfig, enabled = true) {
+  const [xPercent, setXPercent] = useState(gameplayConfig.playerStartXPercent);
+  const pointerIdRef = useRef<number | null>(null);
+  const context: PlayerMovementContext = { gameplayConfig, pointerIdRef, setXPercent };
+  const reset = useCallback(
+    () => setXPercent(gameplayConfig.playerStartXPercent),
+    [gameplayConfig.playerStartXPercent],
+  );
+
+  useEffect(
+    () => bindKeyboardMovement(enabled, gameplayConfig, setXPercent),
+    [enabled, gameplayConfig],
+  );
 
   return {
     reset,
@@ -29,6 +37,7 @@ export function usePlayerMovement(enabled = true) {
 }
 
 interface PlayerMovementContext {
+  readonly gameplayConfig: GameplayConfig;
   readonly pointerIdRef: { current: number | null };
   readonly setXPercent: (xPercent: number | ((xPercent: number) => number)) => void;
 }
@@ -41,7 +50,7 @@ function startMovement(
 ) {
   if (!enabled || event.button !== 0 || context.pointerIdRef.current !== null) return;
   if (event.pointerType === 'mouse') return;
-  if (!isInsideMovementZone(event)) return;
+  if (!isInsideMovementZone(event, context.gameplayConfig)) return;
 
   event.preventDefault();
   event.currentTarget.setPointerCapture(event.pointerId);
@@ -60,7 +69,7 @@ function movePlayer(
     setPlayerPosition(event, context);
     return;
   }
-  if (event.pointerType === 'mouse' && isInsideMovementZone(event)) {
+  if (event.pointerType === 'mouse' && isInsideMovementZone(event, context.gameplayConfig)) {
     setPlayerPosition(event, context);
   }
 }
@@ -78,19 +87,20 @@ function finishMovement(event: ReactPointerEvent<HTMLElement>, context: PlayerMo
 function setPlayerPosition(event: ReactPointerEvent<HTMLElement>, context: PlayerMovementContext) {
   const bounds = event.currentTarget.getBoundingClientRect();
   const rawPercent = ((event.clientX - bounds.left) / bounds.width) * 100;
-  context.setXPercent(clampPlayerX(rawPercent));
+  context.setXPercent(clampPlayerX(rawPercent, context.gameplayConfig));
 }
 
 /*** Return whether a pointer event lies inside the broad lower dodge band. */
-function isInsideMovementZone(event: ReactPointerEvent<HTMLElement>) {
+function isInsideMovementZone(event: ReactPointerEvent<HTMLElement>, gameplayConfig: GameplayConfig) {
   const bounds = event.currentTarget.getBoundingClientRect();
   const yPercent = ((event.clientY - bounds.top) / bounds.height) * 100;
-  return yPercent >= MOVEMENT_ZONE_START_PERCENT;
+  return yPercent >= gameplayConfig.movementZoneStartPercent;
 }
 
 /*** Register desktop Arrow/A/D movement and return its effect cleanup. */
 function bindKeyboardMovement(
   enabled: boolean,
+  gameplayConfig: GameplayConfig,
   setXPercent: (xPercent: number | ((xPercent: number) => number)) => void,
 ) {
   if (!enabled) return undefined;
@@ -99,7 +109,9 @@ function bindKeyboardMovement(
     const direction = keyboardDirection(event.key);
     if (direction === 0) return;
     event.preventDefault();
-    setXPercent((xPercent) => clampPlayerX(xPercent + direction * KEYBOARD_STEP_PERCENT));
+    setXPercent((xPercent) =>
+      clampPlayerX(xPercent + direction * gameplayConfig.keyboardStepPercent, gameplayConfig),
+    );
   };
   window.addEventListener('keydown', handleKeyDown);
   return () => window.removeEventListener('keydown', handleKeyDown);
@@ -113,12 +125,9 @@ function keyboardDirection(key: string) {
 }
 
 /*** Clamp one requested player coordinate to the safe visible horizontal range. */
-function clampPlayerX(xPercent: number) {
-  return Math.min(PLAYER_MAX_X_PERCENT, Math.max(PLAYER_MIN_X_PERCENT, xPercent));
+function clampPlayerX(xPercent: number, gameplayConfig: GameplayConfig) {
+  return Math.min(
+    gameplayConfig.playerMaxXPercent,
+    Math.max(gameplayConfig.playerMinXPercent, xPercent),
+  );
 }
-
-const MOVEMENT_ZONE_START_PERCENT = 65;
-const PLAYER_MIN_X_PERCENT = 9;
-const PLAYER_MAX_X_PERCENT = 91;
-const PLAYER_START_X_PERCENT = 50;
-const KEYBOARD_STEP_PERCENT = 5;
