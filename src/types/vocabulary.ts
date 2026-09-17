@@ -12,7 +12,7 @@ export interface VocabularyWord {
   readonly categoryIds: readonly VocabularyCategoryId[];
 }
 
-export interface VocabEntry {
+interface VocabEntry {
   readonly wordId: string;
   readonly correctResolutions: number;
 }
