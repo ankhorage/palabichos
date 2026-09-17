@@ -56,11 +56,7 @@ function ignoredResult(scene: GameScene, creatureId: string): CreatureActionResu
 }
 
 /*** Replace one active creature with an unused word of the same answer class. */
-function replaceCreature(
-  scene: GameScene,
-  creatureId: string,
-  matchesTarget: boolean,
-): GameScene {
+function replaceCreature(scene: GameScene, creatureId: string, matchesTarget: boolean): GameScene {
   const replacementWord = selectReplacementWord(scene, matchesTarget);
   const occupiedCreatures = scene.creatures.filter((creature) => creature.id !== creatureId);
   const replacement = createCreatureViewModel(
@@ -118,8 +114,7 @@ function retireOldestDistractor(scene: GameScene): DistractorRetirement {
 /*** Select the next unused round word from the required answer class. */
 function selectReplacementWord(scene: GameScene, matchesTarget: boolean): VocabularyWord {
   const word = scene.remainingWords.find(
-    (candidate) =>
-      candidate.categoryIds.includes(scene.level.targetCategoryId) === matchesTarget,
+    (candidate) => candidate.categoryIds.includes(scene.level.targetCategoryId) === matchesTarget,
   );
 
   if (word === undefined) {
