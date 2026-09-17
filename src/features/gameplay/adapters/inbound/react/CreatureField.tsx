@@ -11,7 +11,6 @@ export function CreatureField({
   creatures,
   disabled,
   gameplayConfig,
-  mistakeCreatureId,
   onCreatureAction,
   resolution,
 }: CreatureFieldProps) {
@@ -21,7 +20,6 @@ export function CreatureField({
       creature={creature}
       disabled={disabled}
       gameplayConfig={gameplayConfig}
-      mistake={mistakeCreatureId === creature.id}
       resolution={resolution?.creatureId === creature.id ? resolution : null}
       onAction={onCreatureAction}
     />
@@ -32,7 +30,6 @@ interface CreatureFieldProps {
   readonly creatures: readonly CreatureViewModel[];
   readonly disabled: boolean;
   readonly gameplayConfig: GameplayConfig;
-  readonly mistakeCreatureId: string | null;
   readonly onCreatureAction: (creature: CreatureViewModel, action: CreatureAction) => void;
   readonly resolution: CreatureResolution | null;
 }
