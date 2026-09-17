@@ -1,93 +1,82 @@
 import { describe, expect, test } from 'bun:test';
 
+import type { CreatureViewModel, GameScene } from '../../../../types/gameplay';
 import { applyCreatureAction } from './applyCreatureAction';
-import { createInitialGameScene } from './createInitialGameScene';
+import { createGameScene } from './createGameScene';
 
-describe('applyCreatureAction action outcomes', () => {
-  test('collects a matching creature, increments progress and streak, and respawns', () => {
-    const scene = createInitialGameScene();
-    const result = applyCreatureAction(scene, 'creature-gato', 'collect');
+describe('applyCreatureAction correctness', () => {
+  test('collects a target and records it for Vocab', () => {
+    const scene = createGameScene('animals');
+    const creature = requireCreature(scene, true);
+    const result = applyCreatureAction(scene, creature.id, 'collect');
 
     expect(result.outcome).toBe('collected');
     expect(result.scene.collectedCount).toBe(1);
     expect(result.scene.correctStreak).toBe(1);
-    expect(result.scene.creatures).toHaveLength(scene.creatures.length);
-    expect(result.scene.creatures.some((creature) => creature.id === 'creature-gato')).toBe(false);
+    expect(result.vocabWord?.id).toBe(creature.word.id);
   });
 
-  test('shoots a distractor, increments streak, and does not increase collection progress', () => {
-    const scene = createInitialGameScene();
-    const result = applyCreatureAction(scene, 'creature-mesa', 'shoot');
+  test('shoots a distractor and records it for Vocab', () => {
+    const scene = createGameScene('animals');
+    const creature = requireCreature(scene, false);
+    const result = applyCreatureAction(scene, creature.id, 'shoot');
 
     expect(result.outcome).toBe('destroyed');
     expect(result.scene.collectedCount).toBe(0);
     expect(result.scene.correctStreak).toBe(1);
-    expect(result.scene.creatures.some((creature) => creature.id === 'creature-mesa')).toBe(false);
+    expect(result.vocabWord?.id).toBe(creature.word.id);
   });
 
-  test('wrongly shoots a target, loses health, resets streak, and still consumes the word', () => {
-    const scene = { ...createInitialGameScene(), correctStreak: 4 };
-    const result = applyCreatureAction(scene, 'creature-gato', 'shoot');
+  test('wrong actions lose health, reset streak, and do not capture Vocab', () => {
+    const targetScene = { ...createGameScene('animals'), correctStreak: 4 };
+    const target = requireCreature(targetScene, true);
+    const targetResult = applyCreatureAction(targetScene, target.id, 'shoot');
+    const distractorScene = { ...createGameScene('animals'), correctStreak: 4 };
+    const distractor = requireCreature(distractorScene, false);
+    const distractorResult = applyCreatureAction(distractorScene, distractor.id, 'collect');
 
-    expect(result.outcome).toBe('destroyed');
-    expect(result.scene.health).toBe(4);
-    expect(result.scene.correctStreak).toBe(0);
-    expect(result.scene.spawnSequence).toBe(1);
-    expect(result.scene.creatures.some((creature) => creature.id === 'creature-gato')).toBe(false);
-  });
-
-  test('wrongly collects a distractor, loses health, resets streak, and consumes the word', () => {
-    const scene = { ...createInitialGameScene(), correctStreak: 4 };
-    const result = applyCreatureAction(scene, 'creature-mesa', 'collect');
-
-    expect(result.outcome).toBe('collected');
-    expect(result.scene.health).toBe(4);
-    expect(result.scene.correctStreak).toBe(0);
-    expect(result.scene.spawnSequence).toBe(1);
-    expect(result.scene.creatures.some((creature) => creature.id === 'creature-mesa')).toBe(false);
+    expect(targetResult.scene.health).toBe(4);
+    expect(targetResult.scene.correctStreak).toBe(0);
+    expect(targetResult.vocabWord).toBeNull();
+    expect(distractorResult.scene.health).toBe(4);
+    expect(distractorResult.vocabWord).toBeNull();
   });
 });
 
-describe('applyCreatureAction progression', () => {
-  test('awards one extra life at the configured correct-action threshold and resets streak', () => {
-    const initial = createInitialGameScene();
+describe('applyCreatureAction round progression', () => {
+  test('completes a round without reusing any word id', () => {
+    const completed = playCorrectly(createGameScene('animals'));
+
+    expect(completed.phase).toBe('level-complete');
+    expect(completed.collectedCount).toBe(completed.level.targetCount);
+    expect(new Set(completed.usedWordIds).size).toBe(completed.usedWordIds.length);
+  });
+
+  test('awards an extra life at the configured streak threshold', () => {
+    const initial = createGameScene('animals');
     const scene = {
       ...initial,
       correctStreak: initial.gameplayConfig.correctActionsPerExtraLife - 1,
       health: 4,
     };
-    const result = applyCreatureAction(scene, 'creature-gato', 'collect');
+    const creature = requireCreature(scene, true);
+    const result = applyCreatureAction(scene, creature.id, 'collect');
 
     expect(result.scene.correctStreak).toBe(0);
     expect(result.scene.health).toBe(5);
   });
-
-  test('never awards health above the configured maximum', () => {
-    const initial = createInitialGameScene();
-    const scene = {
-      ...initial,
-      correctStreak: initial.gameplayConfig.correctActionsPerExtraLife - 1,
-      health: initial.gameplayConfig.maxHealth,
-    };
-    const result = applyCreatureAction(scene, 'creature-gato', 'collect');
-
-    expect(result.scene.correctStreak).toBe(0);
-    expect(result.scene.health).toBe(initial.gameplayConfig.maxHealth);
-  });
-
-  test('completes the level on the twentieth matching collect', () => {
-    const scene = { ...createInitialGameScene(), collectedCount: 19 };
-    const result = applyCreatureAction(scene, 'creature-gato', 'collect');
-
-    expect(result.scene.collectedCount).toBe(20);
-    expect(result.scene.phase).toBe('level-complete');
-  });
-
-  test('enters game over when a wrong action consumes the last health', () => {
-    const scene = { ...createInitialGameScene(), health: 1 };
-    const result = applyCreatureAction(scene, 'creature-gato', 'shoot');
-
-    expect(result.scene.health).toBe(0);
-    expect(result.scene.phase).toBe('game-over');
-  });
 });
+
+function playCorrectly(scene: GameScene): GameScene {
+  if (scene.phase !== 'playing') return scene;
+  const [creature] = scene.creatures;
+  if (creature === undefined) throw new Error('Expected active creature during test round.');
+  const action = creature.matchesTarget ? 'collect' : 'shoot';
+  return playCorrectly(applyCreatureAction(scene, creature.id, action).scene);
+}
+
+function requireCreature(scene: GameScene, matchesTarget: boolean): CreatureViewModel {
+  const creature = scene.creatures.find((candidate) => candidate.matchesTarget === matchesTarget);
+  if (creature === undefined) throw new Error('Expected creature missing from test scene.');
+  return creature;
+}

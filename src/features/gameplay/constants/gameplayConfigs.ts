@@ -1,6 +1,6 @@
 import type { GameplayConfig, GameplayConfigId } from '../../../types/gameplay';
 
-/*** Define reusable gameplay tuning presets that levels reference by id. */
+/*** Define reusable gameplay tuning presets that rounds reference by id. */
 export const GAMEPLAY_CONFIGS = {
   starter: {
     collectHoldMs: 420,
@@ -13,6 +13,10 @@ export const GAMEPLAY_CONFIGS = {
     correctActionsPerExtraLife: 10,
     wrongActionDamage: 1,
     projectileDamage: 1,
+    roundTargetCount: 20,
+    initialCreatureCount: 6,
+    targetSpawnsPerCycle: 3,
+    spawnCycleLength: 5,
     movementZoneStartPercent: 65,
     playerMinXPercent: 9,
     playerMaxXPercent: 91,

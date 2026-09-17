@@ -1,9 +1,13 @@
 import type { GameScene } from '../../../../types/gameplay';
-import { GAME_LEVELS } from '../../constants/levels';
+import { selectVocabularyCategory } from '../../../vocabulary/application/use-cases/selectVocabularyCategory';
 import { createGameScene } from './createGameScene';
 
-/*** Advance a completed scene to the next catalog level, wrapping after the last level. */
-export function advanceGameScene(scene: GameScene): GameScene {
-  const nextLevelIndex = (scene.levelIndex + 1) % GAME_LEVELS.length;
-  return createGameScene(nextLevelIndex);
+/*** Advance to a randomly selected playable category without immediate repetition. */
+export function advanceGameScene(scene: GameScene, randomValue: number): GameScene {
+  const category = selectVocabularyCategory(
+    randomValue,
+    scene.gameplayConfig.roundTargetCount,
+    scene.level.targetCategoryId,
+  );
+  return createGameScene(category.id, scene.levelIndex + 1);
 }

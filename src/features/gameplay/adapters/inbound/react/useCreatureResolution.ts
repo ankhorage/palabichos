@@ -43,6 +43,7 @@ export function useCreatureResolution(input: CreatureResolutionInput) {
 
 interface CreatureResolutionInput {
   readonly letterSequenceRef: MutableRefObject<number>;
+  readonly onCorrectWordResolved: (wordId: string) => void;
   readonly sceneRef: MutableRefObject<GameScene>;
   readonly setLetterProjectiles: Dispatch<SetStateAction<readonly LetterProjectileSpec[]>>;
   readonly setScene: Dispatch<SetStateAction<GameScene>>;
@@ -81,7 +82,7 @@ function beginCreatureResolution(
   return true;
 }
 
-/*** Commit the delayed action, then trigger its physical projectile consequence. */
+/*** Commit the delayed action, capture correct vocabulary, then emit shot letters. */
 function completeCreatureResolution(
   creature: CreatureViewModel,
   resolution: CreatureResolution,
@@ -91,6 +92,7 @@ function completeCreatureResolution(
   const result = applyCreatureAction(scene, creature.id, resolution.action);
   context.sceneRef.current = result.scene;
   context.setScene(result.scene);
+  if (result.vocabWord !== null) context.onCorrectWordResolved(result.vocabWord.id);
   if (resolution.action === 'shoot') emitLetterProjectiles(creature, scene, context);
   context.resolutionRef.current = null;
   context.setResolution(null);

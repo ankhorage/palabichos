@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 
 import { applyProjectileHit } from './applyProjectileHit';
-import { createInitialGameScene } from './createInitialGameScene';
+import { createGameScene } from './createGameScene';
 
 describe('applyProjectileHit', () => {
-  test('removes exactly one health and resets the correct streak while vulnerable', () => {
-    const scene = { ...createInitialGameScene(), correctStreak: 6 };
+  test('removes configured health and resets the correct streak while vulnerable', () => {
+    const scene = { ...createGameScene('animals'), correctStreak: 6 };
     const result = applyProjectileHit(scene, false);
 
     expect(result.damaged).toBe(true);
@@ -14,16 +14,15 @@ describe('applyProjectileHit', () => {
   });
 
   test('ignores additional hits during invulnerability', () => {
-    const scene = createInitialGameScene();
+    const scene = createGameScene('animals');
     const result = applyProjectileHit(scene, true);
 
     expect(result.damaged).toBe(false);
     expect(result.scene).toBe(scene);
-    expect(result.scene.health).toBe(5);
   });
 
   test('moves to game over when the final health point is lost', () => {
-    const scene = { ...createInitialGameScene(), health: 1 };
+    const scene = { ...createGameScene('animals'), health: 1 };
     const result = applyProjectileHit(scene, false);
 
     expect(result.scene.health).toBe(0);

@@ -21,6 +21,7 @@ export function useGameLifecycle(input: GameLifecycleInput) {
 }
 
 interface GameLifecycleInput extends SceneReplacementContext {
+  readonly randomSource: () => number;
   readonly scene: GameScene;
 }
 
@@ -33,48 +34,37 @@ interface SceneReplacementContext {
   readonly setShot: Dispatch<SetStateAction<ShotViewModel | null>>;
 }
 
-/*** Schedule the configured success pause before advancing to the next catalog level. */
-function useAutomaticLevelAdvance({
-  resetInvulnerability,
-  resetPlayer,
-  scene,
-  sceneRef,
-  setLetterProjectiles,
-  setScene,
-  setShot,
-}: GameLifecycleInput) {
+/*** Schedule the configured success pause before advancing to another playable category. */
+function useAutomaticLevelAdvance(input: GameLifecycleInput) {
   const transitionTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (scene.phase !== 'level-complete') return undefined;
+    if (input.scene.phase !== 'level-complete') return undefined;
 
-    transitionTimerRef.current = window.setTimeout(
-      () =>
-        replaceScene(advanceGameScene(sceneRef.current), {
-          resetInvulnerability,
-          resetPlayer,
-          sceneRef,
-          setLetterProjectiles,
-          setScene,
-          setShot,
-        }),
-      scene.gameplayConfig.levelCompleteVisibleMs,
-    );
+    transitionTimerRef.current = window.setTimeout(() => {
+      const nextScene = advanceGameScene(input.sceneRef.current, input.randomSource());
+      replaceScene(nextScene, replacementContext(input));
+    }, input.scene.gameplayConfig.levelCompleteVisibleMs);
     return () => clearTransitionTimer(transitionTimerRef);
   }, [
-    resetInvulnerability,
-    resetPlayer,
-    scene.gameplayConfig.levelCompleteVisibleMs,
-    scene.phase,
-    sceneRef,
-    setLetterProjectiles,
-    setScene,
-    setShot,
+    input.randomSource,
+    input.resetInvulnerability,
+    input.resetPlayer,
+    input.scene.gameplayConfig.levelCompleteVisibleMs,
+    input.scene.phase,
+    input.sceneRef,
+    input.setLetterProjectiles,
+    input.setScene,
+    input.setShot,
   ]);
 }
 
 /*** Select the transient-state fields needed when rebuilding a gameplay scene. */
-function replacementContext({ scene: _scene, ...context }: GameLifecycleInput) {
+function replacementContext({
+  randomSource: _randomSource,
+  scene: _scene,
+  ...context
+}: GameLifecycleInput) {
   return context;
 }
 
