@@ -29,7 +29,6 @@ interface SceneReplacementContext {
   readonly resetPlayer: () => void;
   readonly sceneRef: MutableRefObject<GameScene>;
   readonly setLetterProjectiles: Dispatch<SetStateAction<readonly LetterProjectileSpec[]>>;
-  readonly setMistakeCreatureId: Dispatch<SetStateAction<string | null>>;
   readonly setScene: Dispatch<SetStateAction<GameScene>>;
   readonly setShot: Dispatch<SetStateAction<ShotViewModel | null>>;
 }
@@ -41,7 +40,6 @@ function useAutomaticLevelAdvance({
   scene,
   sceneRef,
   setLetterProjectiles,
-  setMistakeCreatureId,
   setScene,
   setShot,
 }: GameLifecycleInput) {
@@ -57,7 +55,6 @@ function useAutomaticLevelAdvance({
           resetPlayer,
           sceneRef,
           setLetterProjectiles,
-          setMistakeCreatureId,
           setScene,
           setShot,
         }),
@@ -71,7 +68,6 @@ function useAutomaticLevelAdvance({
     scene.phase,
     sceneRef,
     setLetterProjectiles,
-    setMistakeCreatureId,
     setScene,
     setShot,
   ]);
@@ -87,7 +83,6 @@ function replaceScene(nextScene: GameScene, context: SceneReplacementContext) {
   context.sceneRef.current = nextScene;
   context.setScene(nextScene);
   context.setLetterProjectiles([]);
-  context.setMistakeCreatureId(null);
   context.setShot(null);
   context.resetInvulnerability();
   context.resetPlayer();
