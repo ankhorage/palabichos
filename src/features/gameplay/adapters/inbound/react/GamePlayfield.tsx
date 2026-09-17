@@ -54,9 +54,7 @@ function PlayfieldActors(props: PlayfieldActorsProps) {
         resolution={props.resolution}
         onCreatureAction={props.onCreatureAction}
       />
-      {props.retiredCreature === null ? null : (
-        <DistractorPuff creature={props.retiredCreature} />
-      )}
+      {props.retiredCreature === null ? null : <DistractorPuff creature={props.retiredCreature} />}
       {props.letterProjectiles.map((projectile) => (
         <LetterProjectile
           key={projectile.id}
