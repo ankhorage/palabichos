@@ -1,14 +1,17 @@
 import type {
+  MouseEvent as ReactMouseEvent,
+  PointerEvent as ReactPointerEvent,
+} from 'react';
+
+import type {
   CreatureAction,
   CreatureResolution,
   CreatureViewModel,
   GameplayConfig,
 } from '../../../../../types/gameplay';
-import { CollectRing } from './CollectRing';
-import { useCreatureGesture } from './useCreatureGesture';
 import { WordCreatureLabel } from './WordCreatureLabel';
 
-/*** Render one readable word creature with translated action-based resolution feedback. */
+/*** Render one readable word creature that fires immediately on primary pointer-down. */
 export function WordCreature({
   creature,
   disabled,
@@ -16,18 +19,16 @@ export function WordCreature({
   onAction,
   resolution,
 }: WordCreatureProps) {
-  const { handlers, holding } = useCreatureGesture(creature, onAction, gameplayConfig);
-
   return (
     <button
       type="button"
-      className={createWordCreatureClassName(creature, holding, resolution)}
+      className={createWordCreatureClassName(creature, resolution)}
       style={createWordCreatureStyle(creature, gameplayConfig, resolution)}
       aria-label={resolution?.translation ?? creature.word.text}
       disabled={disabled}
-      {...handlers}
+      onClick={(event) => handleKeyboardClick(event, creature, onAction)}
+      onPointerDown={(event) => handlePointerDown(event, creature, onAction)}
     >
-      <CollectRing active={holding && !disabled} durationMs={gameplayConfig.collectHoldMs} />
       <span className="antenna antenna-left" aria-hidden="true" />
       <span className="antenna antenna-right" aria-hidden="true" />
       <span className="creature-face" aria-hidden="true">
@@ -55,17 +56,38 @@ interface WordCreatureProps {
   readonly resolution: CreatureResolution | null;
 }
 
-/*** Build the creature classes for idle, hold, reward, and mistake presentation states. */
+/*** Fire immediately for one primary pointer interaction without moving the player beneath it. */
+function handlePointerDown(
+  event: ReactPointerEvent<HTMLButtonElement>,
+  creature: CreatureViewModel,
+  onAction: (creature: CreatureViewModel, action: CreatureAction) => void,
+) {
+  if (event.button !== 0) return;
+  event.preventDefault();
+  event.stopPropagation();
+  onAction(creature, 'shoot');
+}
+
+/*** Preserve keyboard button activation without duplicating pointer-generated click events. */
+function handleKeyboardClick(
+  event: ReactMouseEvent<HTMLButtonElement>,
+  creature: CreatureViewModel,
+  onAction: (creature: CreatureViewModel, action: CreatureAction) => void,
+) {
+  if (event.detail !== 0) return;
+  event.stopPropagation();
+  onAction(creature, 'shoot');
+}
+
+/*** Build the creature classes for idle, reward, and mistake presentation states. */
 function createWordCreatureClassName(
   creature: CreatureViewModel,
-  holding: boolean,
   resolution: CreatureResolution | null,
 ) {
   return [
     'word-creature',
     `word-creature--${creature.variant}`,
     `word-creature--${creature.motion}`,
-    holding ? 'word-creature--holding' : '',
     resolution === null ? '' : 'word-creature--resolving',
     resolution?.isCorrect === true ? 'word-creature--reward' : '',
     resolution?.isCorrect === false ? 'word-creature--resolution-mistake' : '',
