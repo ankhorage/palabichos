@@ -5,6 +5,12 @@
   -webkit-touch-callout: none;
 }
 
+.playfield--hitstop .letter-projectile,
+.playfield--hitstop .shot-layer,
+.playfield--hitstop .word-creature {
+  animation-play-state: paused !important;
+}
+
 .word-creature {
   appearance: none;
   margin: 0;
@@ -129,7 +135,6 @@
   right: 4%;
   bottom: 0;
   left: 4%;
-  height: 35%;
   border-top: 1px solid rgba(182, 255, 195, 0.08);
   background: linear-gradient(180deg, transparent, rgba(65, 160, 112, 0.055));
   pointer-events: none;
@@ -157,6 +162,42 @@
 .player--invulnerable {
   animation: player-invulnerable 220ms ease-in-out infinite alternate;
   filter: drop-shadow(0 0 9px rgba(210, 236, 255, 0.52));
+}
+
+.player--hitstop {
+  animation: player-hitstop 70ms ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 12px rgba(255, 211, 220, 0.7));
+}
+
+.player--hitstop .player-eye {
+  top: 34%;
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 0;
+  color: #233756;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.player--hitstop .player-eye-left {
+  left: 18%;
+}
+
+.player--hitstop .player-eye-right {
+  right: 18%;
+}
+
+.player--hidden {
+  opacity: 0;
+  animation: none;
+}
+
+.player--respawning {
+  animation: player-respawn-blink 140ms steps(2, end) infinite;
 }
 
 @keyframes collect-ring-progress {
@@ -216,6 +257,26 @@
   }
 }
 
+@keyframes player-hitstop {
+  from {
+    transform: translateX(-50%) translateX(-2px);
+  }
+  to {
+    transform: translateX(-50%) translateX(2px);
+  }
+}
+
+@keyframes player-respawn-blink {
+  0%,
+  48% {
+    opacity: 0.28;
+  }
+  52%,
+  100% {
+    opacity: 1;
+  }
+}
+
 @keyframes creature-mistake {
   0%,
   100% {
@@ -238,6 +299,8 @@
   }
 
   .player--invulnerable,
+  .player--hitstop,
+  .player--respawning,
   .shot-line,
   .word-creature--mistake {
     animation: none;
