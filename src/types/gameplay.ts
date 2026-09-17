@@ -30,6 +30,7 @@ export interface HorizontalBounds {
 
 export interface GameplayConfig {
   readonly resolutionFeedbackMs: number;
+  readonly correctFeedbackVisibleMs: number;
   readonly mistakeVisibleMs: number;
   readonly shotVisibleMs: number;
   readonly startingHealth: number;

@@ -34,8 +34,13 @@ export function GamePlayfield(props: GamePlayfieldProps) {
       <div className="hill hill-back" aria-hidden="true" />
       <div className="hill hill-front" aria-hidden="true" />
       <PlayfieldActors {...props} />
-      <div className="movement-zone" style={movementZoneStyle} aria-hidden="true">
-        <span>mueve</span>
+      <div className="movement-zone" style={movementZoneStyle}>
+        <span
+          className={props.correctFeedback === null ? undefined : 'movement-zone-feedback--correct'}
+          aria-live="polite"
+        >
+          {props.correctFeedback === null ? 'mueve' : `✓ ${props.correctFeedback}`}
+        </span>
       </div>
       <div className="baseline" aria-hidden="true" />
       <GamePhaseOverlay scene={props.scene} onRestart={props.onRestart} />
@@ -97,6 +102,7 @@ function readHorizontalBounds(element: HTMLElement | null): HorizontalBounds | n
 }
 
 interface GamePlayfieldProps extends PlayfieldActorsProps {
+  readonly correctFeedback: string | null;
   readonly movementHandlers: MovementHandlers;
   readonly onRestart: () => void;
 }

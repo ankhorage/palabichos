@@ -20,6 +20,7 @@ export function GameScreen({ scene }: GameScreenProps) {
       <div className="stars" aria-hidden="true" />
       <GameHeader scene={interaction.scene} />
       <GamePlayfield
+        correctFeedback={interaction.correctFeedback}
         scene={interaction.scene}
         shot={interaction.shot}
         hitPhase={interaction.hitPhase}

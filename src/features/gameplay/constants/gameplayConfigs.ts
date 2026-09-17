@@ -4,6 +4,7 @@ import type { GameplayConfig, GameplayConfigId } from '../../../types/gameplay';
 export const GAMEPLAY_CONFIGS = {
   starter: {
     resolutionFeedbackMs: 850,
+    correctFeedbackVisibleMs: 2500,
     mistakeVisibleMs: 420,
     shotVisibleMs: 220,
     startingHealth: 5,
