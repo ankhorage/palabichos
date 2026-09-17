@@ -23,6 +23,11 @@ interface CreatureAppearance {
   readonly animationDurationSeconds: number;
 }
 
+export interface HorizontalBounds {
+  readonly left: number;
+  readonly right: number;
+}
+
 export interface GameplayConfig {
   readonly resolutionFeedbackMs: number;
   readonly mistakeVisibleMs: number;
@@ -53,7 +58,6 @@ export interface GameplayConfig {
   readonly projectileMaxXPercent: number;
   readonly projectileNearDriftPercent: number;
   readonly projectileFarDriftPercent: number;
-  readonly playerHitRadiusPercent: number;
   readonly invulnerabilityMs: number;
   readonly levelCompleteVisibleMs: number;
   readonly rewardParticleCount: number;
@@ -119,7 +123,6 @@ export interface LetterProjectileSpec {
   readonly letter: string;
   readonly startXPercent: number;
   readonly startYPercent: number;
-  readonly driftPercent: number;
   readonly fallDistancePercent: number;
   readonly durationMs: number;
   readonly delayMs: number;
