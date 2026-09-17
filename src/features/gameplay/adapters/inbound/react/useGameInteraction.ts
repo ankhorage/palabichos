@@ -45,7 +45,6 @@ export function useGameInteraction(
     movementHandlers: movement.handlers,
     playerXPercent: movement.xPercent,
     resolution: bindings.resolution.resolution,
-    retiredCreature: feedback.retiredCreature,
     scene,
     shot: feedback.shot,
     onCreatureAction: (creature: CreatureViewModel, action: CreatureAction) =>
@@ -77,7 +76,7 @@ function useGameplayBindings(input: GameplayBindingsInput) {
   const resolution = useCreatureResolution({
     letterSequenceRef: input.runtime.letterSequenceRef,
     onCorrectWordResolved: input.onCorrectWordResolved,
-    onDistractorRetired: (creature) => showDistractorPuff(creature, input.feedback, input.runtime),
+    randomSource: input.randomSource,
     sceneRef: input.runtime.sceneRef,
     setLetterProjectiles: input.feedback.setLetterProjectiles,
     setScene: input.setScene,
@@ -108,7 +107,6 @@ interface GameInteractionContext {
 }
 
 interface InteractionRuntime {
-  readonly distractorPuffTimerRef: { current: number | null };
   readonly letterSequenceRef: { current: number };
   readonly sceneRef: { current: GameScene };
   readonly shotSequenceRef: { current: number };
@@ -117,9 +115,7 @@ interface InteractionRuntime {
 
 interface TransientFeedbackState {
   readonly letterProjectiles: readonly LetterProjectileSpec[];
-  readonly retiredCreature: CreatureViewModel | null;
   readonly setLetterProjectiles: Dispatch<SetStateAction<readonly LetterProjectileSpec[]>>;
-  readonly setRetiredCreature: Dispatch<SetStateAction<CreatureViewModel | null>>;
   readonly setShot: Dispatch<SetStateAction<ShotViewModel | null>>;
   readonly shot: ShotViewModel | null;
 }
@@ -137,35 +133,19 @@ function useInteractionRuntime(initialScene: GameScene): InteractionRuntime {
   const shotSequenceRef = useRef(0);
   const letterSequenceRef = useRef(0);
   const shotTimerRef = useRef<number | null>(null);
-  const distractorPuffTimerRef = useRef<number | null>(null);
 
-  useEffect(
-    () => () => {
-      clearTimer(shotTimerRef);
-      clearTimer(distractorPuffTimerRef);
-    },
-    [],
-  );
+  useEffect(() => () => clearTimer(shotTimerRef), []);
 
-  return {
-    distractorPuffTimerRef,
-    letterSequenceRef,
-    sceneRef,
-    shotSequenceRef,
-    shotTimerRef,
-  };
+  return { letterSequenceRef, sceneRef, shotSequenceRef, shotTimerRef };
 }
 
 /*** Own short-lived React presentation state separately from the gameplay scene. */
 function useTransientFeedbackState(): TransientFeedbackState {
   const [shot, setShot] = useState<ShotViewModel | null>(null);
   const [letterProjectiles, setLetterProjectiles] = useState<readonly LetterProjectileSpec[]>([]);
-  const [retiredCreature, setRetiredCreature] = useState<CreatureViewModel | null>(null);
   return {
     letterProjectiles,
-    retiredCreature,
     setLetterProjectiles,
-    setRetiredCreature,
     setShot,
     shot,
   };
@@ -203,20 +183,6 @@ function handleCreatureAction(
 ) {
   if (!context.beginCreatureResolution(creature, action)) return;
   showShot(creature, context);
-}
-
-/*** Show one neutral short-lived puff where an aged distractor was retired. */
-function showDistractorPuff(
-  creature: CreatureViewModel,
-  feedback: TransientFeedbackState,
-  runtime: InteractionRuntime,
-) {
-  feedback.setRetiredCreature(creature);
-  clearTimer(runtime.distractorPuffTimerRef);
-  runtime.distractorPuffTimerRef.current = window.setTimeout(
-    () => feedback.setRetiredCreature(null),
-    runtime.sceneRef.current.gameplayConfig.distractorPuffVisibleMs,
-  );
 }
 
 /*** Remove one completed falling letter from React presentation state. */

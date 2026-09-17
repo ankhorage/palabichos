@@ -1,16 +1,8 @@
-import type {
-  CreatureViewModel,
-  GameplayConfig,
-  GameplayConfigId,
-  GameScene,
-} from '../../../../types/gameplay';
-import type { VocabularyWord } from '../../../../types/vocabulary';
+import type { GameplayConfigId, GameScene } from '../../../../types/gameplay';
 import { getVocabularyCategory } from '../../../vocabulary/application/use-cases/getVocabularyCategory';
 import { getVocabularyWordsForCategory } from '../../../vocabulary/application/use-cases/getVocabularyWordsForCategory';
-import { getVocabularyWordsOutsideCategory } from '../../../vocabulary/application/use-cases/getVocabularyWordsOutsideCategory';
 import { GAMEPLAY_CONFIGS } from '../../constants/gameplayConfigs';
-import { getDistractorCategoryId } from '../../utils/getDistractorCategoryId';
-import { createCreatureViewModel } from './createCreatureViewModel';
+import { createGameBoard } from './createGameBoard';
 
 /*** Build a fresh round for one selected vocabulary category and presentation seed. */
 export function createGameScene(
@@ -21,7 +13,22 @@ export function createGameScene(
   const gameplayConfigId: GameplayConfigId = 'starter';
   const gameplayConfig = GAMEPLAY_CONFIGS.starter;
   const category = getVocabularyCategory(categoryId);
-  const roundContent = createRoundContent(category.id, presentationSeed, gameplayConfig);
+  const targetWords = getVocabularyWordsForCategory(categoryId);
+  if (targetWords.length < gameplayConfig.roundTargetCount) {
+    throw new Error(
+      `Category ${categoryId} requires at least ${gameplayConfig.roundTargetCount} target words.`,
+    );
+  }
+  const resolvedWordIds: readonly string[] = [];
+  const boardSequence = 0;
+  const creatures = createGameBoard({
+    targetCategoryId: category.id,
+    config: gameplayConfig,
+    presentationSeed,
+    boardSequence,
+    resolvedWordIds,
+    previousWordIds: [],
+  });
 
   return {
     level: {
@@ -38,204 +45,9 @@ export function createGameScene(
     collectedCount: 0,
     correctStreak: 0,
     health: gameplayConfig.startingHealth,
-    ...roundContent,
-    spawnSequence: 0,
-    presentationSeed,
-  };
-}
-
-interface RoundContent {
-  readonly creatures: readonly CreatureViewModel[];
-  readonly remainingWords: readonly VocabularyWord[];
-  readonly usedWordIds: readonly string[];
-  readonly recentDistractorCategoryIds: readonly string[];
-}
-
-/*** Build round-local vocabulary, active creatures, and distractor-history state. */
-function createRoundContent(
-  categoryId: string,
-  presentationSeed: number,
-  gameplayConfig: GameplayConfig,
-): RoundContent {
-  const targetWords = getVocabularyWordsForCategory(categoryId);
-  const distractorWords = diversifyDistractorWords(
-    getVocabularyWordsOutsideCategory(categoryId),
-    categoryId,
-  );
-  validateRoundPools(categoryId, targetWords, distractorWords, gameplayConfig);
-  const initialWords = selectInitialWords(targetWords, distractorWords, gameplayConfig);
-  const usedWordIds = initialWords.map((word) => word.id);
-  const usedWordIdSet = new Set(usedWordIds);
-  const remainingWords = [...targetWords, ...distractorWords].filter(
-    (word) => !usedWordIdSet.has(word.id),
-  );
-  const creatures = createInitialCreatures(
-    initialWords,
-    categoryId,
-    presentationSeed,
-    gameplayConfig,
-  );
-
-  return {
     creatures,
-    remainingWords,
-    usedWordIds,
-    recentDistractorCategoryIds: createInitialDistractorCategoryHistory(
-      creatures,
-      categoryId,
-      gameplayConfig.distractorRecentCategoryWindow,
-    ),
+    resolvedWordIds,
+    boardSequence,
+    presentationSeed,
   };
-}
-
-/*** Validate that one round has enough vocabulary and a coherent churn configuration. */
-function validateRoundPools(
-  categoryId: string,
-  targetWords: readonly VocabularyWord[],
-  distractorWords: readonly VocabularyWord[],
-  config: GameplayConfig,
-) {
-  const activeDistractorCount = config.initialCreatureCount - config.activeTargetCount;
-  if (targetWords.length < config.roundTargetCount) {
-    throw new Error(
-      `Category ${categoryId} requires at least ${config.roundTargetCount} target words.`,
-    );
-  }
-  if (config.activeTargetCount <= 0 || activeDistractorCount <= 0) {
-    throw new Error('Gameplay active mix requires both targets and distractors.');
-  }
-  if (
-    targetWords.length < config.activeTargetCount ||
-    distractorWords.length < activeDistractorCount
-  ) {
-    throw new Error('Round vocabulary pool cannot fill the configured active creature mix.');
-  }
-  if (
-    config.distractorRetireMinAgeCorrectShots <= 0 ||
-    config.distractorRetireMaxAgeCorrectShots < config.distractorRetireMinAgeCorrectShots
-  ) {
-    throw new Error(
-      'Distractor churn ages must define a positive minimum no greater than maximum.',
-    );
-  }
-}
-
-interface InitialWordSelection {
-  readonly words: readonly VocabularyWord[];
-  readonly usedWordIds: readonly string[];
-}
-
-/*** Select the configured initial target/distractor mix without reusing a word id. */
-function selectInitialWords(
-  targetWords: readonly VocabularyWord[],
-  distractorWords: readonly VocabularyWord[],
-  config: GameplayConfig,
-): readonly VocabularyWord[] {
-  const selection = Array.from({
-    length: config.initialCreatureCount,
-  }).reduce<InitialWordSelection>(
-    (state, _, sequence) => {
-      const targetPreferred = shouldSelectTarget(sequence, config);
-      const word = selectUnusedWord(
-        targetPreferred ? targetWords : distractorWords,
-        state.usedWordIds,
-      );
-
-      return {
-        words: [...state.words, word],
-        usedWordIds: [...state.usedWordIds, word.id],
-      };
-    },
-    { words: [], usedWordIds: [] },
-  );
-
-  return selection.words;
-}
-
-/*** Spread the configured target count evenly through the initial creature sequence. */
-function shouldSelectTarget(sequence: number, config: GameplayConfig) {
-  const targetsBefore = Math.floor(
-    (sequence * config.activeTargetCount) / config.initialCreatureCount,
-  );
-  const targetsAfter = Math.floor(
-    ((sequence + 1) * config.activeTargetCount) / config.initialCreatureCount,
-  );
-  return targetsAfter > targetsBefore;
-}
-
-/*** Pick the first unused word from one required answer-class pool. */
-function selectUnusedWord(
-  words: readonly VocabularyWord[],
-  usedWordIds: readonly string[],
-): VocabularyWord {
-  const word = words.find((candidate) => !usedWordIds.includes(candidate.id));
-  if (word === undefined) {
-    throw new Error('Round vocabulary pool cannot fill the active creature set.');
-  }
-  return word;
-}
-
-/*** Interleave non-target words by category so distractors span many vocabulary topics. */
-function diversifyDistractorWords(
-  words: readonly VocabularyWord[],
-  targetCategoryId: string,
-): readonly VocabularyWord[] {
-  const categoryIds = words
-    .flatMap((word) => word.categoryIds.filter((categoryId) => categoryId !== targetCategoryId))
-    .filter((categoryId, index, all) => all.indexOf(categoryId) === index);
-  const maxCategorySize = Math.max(
-    0,
-    ...categoryIds.map(
-      (categoryId) => words.filter((word) => word.categoryIds.includes(categoryId)).length,
-    ),
-  );
-  const interleaved = Array.from({ length: maxCategorySize }).flatMap((_, wordIndex) =>
-    categoryIds.flatMap((categoryId) => {
-      const word = words
-        .filter((candidate) => candidate.categoryIds.includes(categoryId))
-        .at(wordIndex);
-      return word === undefined ? [] : [word];
-    }),
-  );
-
-  return interleaved.reduce<readonly VocabularyWord[]>(
-    (unique, word) =>
-      unique.some((candidate) => candidate.id === word.id) ? unique : [...unique, word],
-    [],
-  );
-}
-
-/*** Build the initial readable creature layout while preserving the selected word sequence. */
-function createInitialCreatures(
-  words: readonly VocabularyWord[],
-  targetCategoryId: string,
-  presentationSeed: number,
-  config: GameplayConfig,
-): readonly CreatureViewModel[] {
-  return words.reduce<readonly CreatureViewModel[]>((creatures, word, sequence) => {
-    const creature = createCreatureViewModel(
-      word,
-      sequence,
-      targetCategoryId,
-      presentationSeed,
-      creatures,
-      config.creatureMinimumDistancePercent,
-    );
-    return [...creatures, creature];
-  }, []);
-}
-
-/*** Seed recent distractor-category history from the initial active field. */
-function createInitialDistractorCategoryHistory(
-  creatures: readonly CreatureViewModel[],
-  targetCategoryId: string,
-  windowSize: number,
-) {
-  return creatures
-    .filter((creature) => !creature.matchesTarget)
-    .flatMap((creature) => {
-      const categoryId = getDistractorCategoryId(creature.word, targetCategoryId);
-      return categoryId === null ? [] : [categoryId];
-    })
-    .slice(-windowSize);
 }
