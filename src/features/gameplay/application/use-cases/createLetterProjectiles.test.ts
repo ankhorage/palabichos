@@ -12,7 +12,7 @@ describe('createLetterProjectiles', () => {
     if (creature === undefined) return;
 
     const projectiles = createLetterProjectiles(creature, 4, scene.gameplayConfig);
-    const firstProjectile = projectiles[0];
+    const [firstProjectile] = projectiles;
 
     expect(projectiles.map((projectile) => projectile.letter).join('')).toBe('Käse');
     expect(projectiles).toHaveLength(Array.from('Käse').length);
@@ -20,6 +20,8 @@ describe('createLetterProjectiles', () => {
     expect(firstProjectile).toBeDefined();
     if (firstProjectile === undefined) return;
     expect(firstProjectile.driftPercent).toBe(-scene.gameplayConfig.projectileFarDriftPercent);
-    expect(firstProjectile.fallDistancePercent).toBe(scene.gameplayConfig.projectileFallDistancePercent);
+    expect(firstProjectile.fallDistancePercent).toBe(
+      scene.gameplayConfig.projectileFallDistancePercent,
+    );
   });
 });
