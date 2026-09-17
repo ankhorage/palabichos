@@ -27,10 +27,8 @@ export function useGameInteraction(initialScene: GameScene) {
   });
   const resolution = useCreatureResolution({
     letterSequenceRef: runtime.letterSequenceRef,
-    mistakeTimerRef: runtime.mistakeTimerRef,
     sceneRef: runtime.sceneRef,
     setLetterProjectiles: feedback.setLetterProjectiles,
-    setMistakeCreatureId: feedback.setMistakeCreatureId,
     setScene,
   });
   const lifecycle = useGameLifecycle({
@@ -39,7 +37,6 @@ export function useGameInteraction(initialScene: GameScene) {
     scene,
     sceneRef: runtime.sceneRef,
     setLetterProjectiles: feedback.setLetterProjectiles,
-    setMistakeCreatureId: feedback.setMistakeCreatureId,
     setScene,
     setShot: feedback.setShot,
   });
@@ -54,7 +51,6 @@ export function useGameInteraction(initialScene: GameScene) {
     ...damage,
     ...lifecycle,
     letterProjectiles: feedback.letterProjectiles,
-    mistakeCreatureId: feedback.mistakeCreatureId,
     movementHandlers: movement.handlers,
     playerXPercent: movement.xPercent,
     resolution: resolution.resolution,
@@ -81,7 +77,6 @@ interface GameInteractionContext {
 
 interface InteractionRuntime {
   readonly letterSequenceRef: { current: number };
-  readonly mistakeTimerRef: { current: number | null };
   readonly sceneRef: { current: GameScene };
   readonly shotSequenceRef: { current: number };
   readonly shotTimerRef: { current: number | null };
@@ -89,9 +84,7 @@ interface InteractionRuntime {
 
 interface TransientFeedbackState {
   readonly letterProjectiles: readonly LetterProjectileSpec[];
-  readonly mistakeCreatureId: string | null;
   readonly setLetterProjectiles: Dispatch<SetStateAction<readonly LetterProjectileSpec[]>>;
-  readonly setMistakeCreatureId: Dispatch<SetStateAction<string | null>>;
   readonly setShot: Dispatch<SetStateAction<ShotViewModel | null>>;
   readonly shot: ShotViewModel | null;
 }
@@ -109,23 +102,19 @@ function useInteractionRuntime(initialScene: GameScene): InteractionRuntime {
   const shotSequenceRef = useRef(0);
   const letterSequenceRef = useRef(0);
   const shotTimerRef = useRef<number | null>(null);
-  const mistakeTimerRef = useRef<number | null>(null);
 
-  useEffect(() => () => clearFeedbackTimers(shotTimerRef, mistakeTimerRef), []);
+  useEffect(() => () => clearTimer(shotTimerRef), []);
 
-  return { letterSequenceRef, mistakeTimerRef, sceneRef, shotSequenceRef, shotTimerRef };
+  return { letterSequenceRef, sceneRef, shotSequenceRef, shotTimerRef };
 }
 
 /*** Own short-lived React presentation state separately from the gameplay scene. */
 function useTransientFeedbackState(): TransientFeedbackState {
   const [shot, setShot] = useState<ShotViewModel | null>(null);
   const [letterProjectiles, setLetterProjectiles] = useState<readonly LetterProjectileSpec[]>([]);
-  const [mistakeCreatureId, setMistakeCreatureId] = useState<string | null>(null);
   return {
     letterProjectiles,
-    mistakeCreatureId,
     setLetterProjectiles,
-    setMistakeCreatureId,
     setShot,
     shot,
   };
@@ -187,15 +176,6 @@ function showShot(creature: CreatureViewModel, context: GameInteractionContext) 
     () => context.setShot(null),
     context.sceneRef.current.gameplayConfig.shotVisibleMs,
   );
-}
-
-/*** Clear the browser feedback timers when the interaction adapter unmounts. */
-function clearFeedbackTimers(
-  shotTimerRef: { current: number | null },
-  mistakeTimerRef: { current: number | null },
-) {
-  clearTimer(shotTimerRef);
-  clearTimer(mistakeTimerRef);
 }
 
 /*** Clear one optional browser timeout held by the interaction adapter. */
