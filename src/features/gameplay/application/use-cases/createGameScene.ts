@@ -6,8 +6,12 @@ import { getVocabularyWordsOutsideCategory } from '../../../vocabulary/applicati
 import { GAMEPLAY_CONFIGS } from '../../constants/gameplayConfigs';
 import { createCreatureViewModel } from './createCreatureViewModel';
 
-/*** Build a fresh round for one selected vocabulary category. */
-export function createGameScene(categoryId: string, levelIndex = 0): GameScene {
+/*** Build a fresh round for one selected vocabulary category and presentation seed. */
+export function createGameScene(
+  categoryId: string,
+  levelIndex = 0,
+  presentationSeed = 0,
+): GameScene {
   const gameplayConfigId: GameplayConfigId = 'starter';
   const gameplayConfig = GAMEPLAY_CONFIGS.starter;
   const category = getVocabularyCategory(categoryId);
@@ -43,11 +47,12 @@ export function createGameScene(categoryId: string, levelIndex = 0): GameScene {
     correctStreak: 0,
     health: gameplayConfig.startingHealth,
     creatures: initialWords.map((word, sequence) =>
-      createCreatureViewModel(word, sequence, category.id),
+      createCreatureViewModel(word, sequence, category.id, presentationSeed),
     ),
     remainingWords,
     usedWordIds,
     spawnSequence: 0,
+    presentationSeed,
   };
 }
 

@@ -20,46 +20,13 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+.word-creature:active {
+  filter: brightness(1.14) drop-shadow(0 0 8px rgba(221, 239, 255, 0.42));
+}
+
 .word-creature:focus-visible {
   outline: 3px solid rgba(224, 239, 255, 0.92);
   outline-offset: 5px;
-}
-
-.word-creature--holding {
-  animation-play-state: paused;
-  filter: brightness(1.06);
-}
-
-.collect-ring {
-  position: absolute;
-  z-index: 5;
-  inset: -13px;
-  width: calc(100% + 26px);
-  height: calc(100% + 26px);
-  overflow: visible;
-  pointer-events: none;
-  transform: rotate(-90deg);
-}
-
-.collect-ring-track,
-.collect-ring-progress {
-  fill: none;
-  stroke-width: 3.2;
-}
-
-.collect-ring-track {
-  stroke: rgba(255, 255, 255, 0.12);
-}
-
-.collect-ring-progress {
-  stroke: rgba(229, 255, 207, 0.96);
-  stroke-linecap: round;
-  stroke-dasharray: 176;
-  stroke-dashoffset: 176;
-  filter: drop-shadow(0 0 4px rgba(190, 255, 168, 0.45));
-  animation-name: collect-ring-progress;
-  animation-timing-function: linear;
-  animation-fill-mode: forwards;
 }
 
 .shot-layer {
@@ -186,12 +153,6 @@
   animation: player-respawn-blink 140ms steps(2, end) infinite;
 }
 
-@keyframes collect-ring-progress {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
 @keyframes shot-line-fade {
   0% {
     opacity: 0;
@@ -240,10 +201,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .collect-ring-progress {
-    animation-duration: 1ms !important;
-  }
-
   .player--invulnerable,
   .player--hitstop,
   .player--respawning,

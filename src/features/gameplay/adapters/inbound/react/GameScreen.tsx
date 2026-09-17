@@ -37,7 +37,7 @@ export function GameScreen({ scene }: GameScreenProps) {
       />
       <footer className="game-footer">
         <span className="status-dot" aria-hidden="true" />
-        <span>toca = dispara · mantén = recoge</span>
+        <span>toca la respuesta correcta = dispara</span>
       </footer>
     </main>
   );

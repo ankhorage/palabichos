@@ -1,40 +1,34 @@
-import type {
-  CreatureAction,
-  CreatureActionResult,
-  GameplayConfig,
-  GameScene,
-} from '../../../../types/gameplay';
+import type { CreatureActionResult, GameplayConfig, GameScene } from '../../../../types/gameplay';
 import type { VocabularyWord } from '../../../../types/vocabulary';
 import { createCreatureViewModel } from './createCreatureViewModel';
 
-/*** Apply one collect-or-shoot decision and return the next immutable gameplay scene. */
-export function applyCreatureAction(
-  scene: GameScene,
-  creatureId: string,
-  action: CreatureAction,
-): CreatureActionResult {
+/*** Apply one creature shot and return the next immutable gameplay scene. */
+export function applyCreatureAction(scene: GameScene, creatureId: string): CreatureActionResult {
   if (scene.phase !== 'playing') return ignoredResult(scene, creatureId);
 
   const creature = scene.creatures.find((candidate) => candidate.id === creatureId);
   if (creature === undefined) return ignoredResult(scene, creatureId);
 
-  const isCorrect = action === 'collect' ? creature.matchesTarget : !creature.matchesTarget;
+  const isCorrect = creature.matchesTarget;
   const progression = isCorrect ? correctProgression(scene) : mistakeProgression(scene);
-  const collectedCount =
-    action === 'collect' && isCorrect
-      ? Math.min(scene.level.targetCount, scene.collectedCount + 1)
-      : scene.collectedCount;
+  const collectedCount = isCorrect
+    ? Math.min(scene.level.targetCount, scene.collectedCount + 1)
+    : scene.collectedCount;
   const phase =
     progression.health === 0
       ? 'game-over'
       : collectedCount >= scene.level.targetCount
         ? 'level-complete'
         : scene.phase;
-  const replacementWord = selectReplacementWord(scene);
+  const mustKeepTargetAvailable =
+    creature.matchesTarget &&
+    !scene.creatures.some((candidate) => candidate.id !== creature.id && candidate.matchesTarget);
+  const replacementWord = selectReplacementWord(scene, mustKeepTargetAvailable);
   const replacement = createCreatureViewModel(
     replacementWord,
     scene.gameplayConfig.initialCreatureCount + scene.spawnSequence,
     scene.level.targetCategoryId,
+    scene.presentationSeed,
   );
 
   return {
@@ -50,7 +44,7 @@ export function applyCreatureAction(
       usedWordIds: [...scene.usedWordIds, replacementWord.id],
       spawnSequence: scene.spawnSequence + 1,
     },
-    outcome: action === 'shoot' ? 'destroyed' : 'collected',
+    outcome: 'destroyed',
     creatureId,
     vocabWord: isCorrect ? creature.word : null,
   };
@@ -82,15 +76,15 @@ function mistakeProgression(scene: GameScene) {
   };
 }
 
-/*** Select the next unused round word while preserving the configured target ratio. */
-function selectReplacementWord(scene: GameScene): VocabularyWord {
+/*** Select the next unused round word while preserving target availability and the configured ratio. */
+function selectReplacementWord(scene: GameScene, forceTarget: boolean): VocabularyWord {
   const targetWords = scene.remainingWords.filter((word) =>
     word.categoryIds.includes(scene.level.targetCategoryId),
   );
   const distractorWords = scene.remainingWords.filter(
     (word) => !word.categoryIds.includes(scene.level.targetCategoryId),
   );
-  const targetPreferred = prefersTarget(scene.spawnSequence, scene.gameplayConfig);
+  const targetPreferred = forceTarget || prefersTarget(scene.spawnSequence, scene.gameplayConfig);
   const word = targetPreferred
     ? (targetWords[0] ?? distractorWords[0])
     : (distractorWords[0] ?? targetWords[0]);

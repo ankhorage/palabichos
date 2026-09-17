@@ -3,8 +3,6 @@ import type { GameplayConfig, GameplayConfigId } from '../../../types/gameplay';
 /*** Define reusable gameplay tuning presets that rounds reference by id. */
 export const GAMEPLAY_CONFIGS = {
   starter: {
-    collectHoldMs: 420,
-    pointerCancelDistancePx: 34,
     resolutionFeedbackMs: 850,
     mistakeVisibleMs: 420,
     shotVisibleMs: 220,

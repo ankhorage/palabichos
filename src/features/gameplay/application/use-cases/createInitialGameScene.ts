@@ -7,5 +7,5 @@ import { createGameScene } from './createGameScene';
 export function createInitialGameScene(randomValue: number): GameScene {
   const config = GAMEPLAY_CONFIGS.starter;
   const category = selectVocabularyCategory(randomValue, config.roundTargetCount);
-  return createGameScene(category.id, 0);
+  return createGameScene(category.id, 0, randomValue);
 }

@@ -1,13 +1,15 @@
 import type { CreatureViewModel } from '../../../../types/gameplay';
 import type { VocabularyWord } from '../../../../types/vocabulary';
 
-/*** Build deterministic creature presentation independently from vocabulary identity. */
+/*** Build creature presentation independently from vocabulary identity and answer correctness. */
 export function createCreatureViewModel(
   word: VocabularyWord,
   sequence: number,
   targetCategoryId: string,
+  presentationSeed = 0,
 ): CreatureViewModel {
-  const position = POSITIONS[sequence % POSITIONS.length];
+  const positionOffset = createPositionOffset(presentationSeed);
+  const position = POSITIONS[(sequence + positionOffset) % POSITIONS.length];
   const variant = VARIANTS[sequence % VARIANTS.length];
   const motion = MOTIONS[sequence % MOTIONS.length];
 
@@ -26,6 +28,12 @@ export function createCreatureViewModel(
     animationDelaySeconds: -((sequence % 7) * 0.55),
     animationDurationSeconds: 5.8 + (sequence % 6) * 0.42,
   };
+}
+
+/*** Convert one round random seed into a stable presentation-slot offset. */
+function createPositionOffset(presentationSeed: number) {
+  const normalizedSeed = Math.min(0.999999, Math.max(0, presentationSeed));
+  return Math.floor(normalizedSeed * POSITIONS.length);
 }
 
 const POSITIONS = [

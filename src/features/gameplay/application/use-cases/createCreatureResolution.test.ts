@@ -4,7 +4,7 @@ import { createCreatureResolution } from './createCreatureResolution';
 import { createGameScene } from './createGameScene';
 
 describe('createCreatureResolution', () => {
-  test('derives correctness from category membership and the selected action', () => {
+  test('marks target shots correct and distractor shots wrong', () => {
     const scene = createGameScene('animals');
     const target = scene.creatures.find((creature) => creature.matchesTarget);
     const distractor = scene.creatures.find((creature) => !creature.matchesTarget);
@@ -13,9 +13,12 @@ describe('createCreatureResolution', () => {
     expect(distractor).toBeDefined();
     if (target === undefined || distractor === undefined) return;
 
-    expect(createCreatureResolution(target, 'collect', 1).isCorrect).toBe(true);
-    expect(createCreatureResolution(target, 'shoot', 2).isCorrect).toBe(false);
-    expect(createCreatureResolution(distractor, 'shoot', 3).isCorrect).toBe(true);
-    expect(createCreatureResolution(distractor, 'collect', 4).isCorrect).toBe(false);
+    const targetResolution = createCreatureResolution(target, 'shoot', 1);
+    const distractorResolution = createCreatureResolution(distractor, 'shoot', 2);
+
+    expect(targetResolution.isCorrect).toBe(true);
+    expect(targetResolution.action).toBe('shoot');
+    expect(distractorResolution.isCorrect).toBe(false);
+    expect(distractorResolution.action).toBe('shoot');
   });
 });

@@ -82,18 +82,18 @@ function beginCreatureResolution(
   return true;
 }
 
-/*** Commit the delayed action, capture correct vocabulary, then emit shot letters. */
+/*** Commit the delayed shot, capture correct vocabulary, and punish only wrong shots with letters. */
 function completeCreatureResolution(
   creature: CreatureViewModel,
   resolution: CreatureResolution,
   context: CreatureResolutionContext,
 ) {
   const scene = context.sceneRef.current;
-  const result = applyCreatureAction(scene, creature.id, resolution.action);
+  const result = applyCreatureAction(scene, creature.id);
   context.sceneRef.current = result.scene;
   context.setScene(result.scene);
   if (result.vocabWord !== null) context.onCorrectWordResolved(result.vocabWord.id);
-  if (resolution.action === 'shoot') emitLetterProjectiles(creature, scene, context);
+  if (!resolution.isCorrect) emitLetterProjectiles(creature, scene, context);
   context.resolutionRef.current = null;
   context.setResolution(null);
   context.timerRef.current = null;

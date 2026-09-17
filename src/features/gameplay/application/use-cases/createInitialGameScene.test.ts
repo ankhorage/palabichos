@@ -4,6 +4,7 @@ import { getPlayableVocabularyCategories } from '../../../vocabulary/application
 import { getVocabularyWordsForCategory } from '../../../vocabulary/application/use-cases/getVocabularyWordsForCategory';
 import { VOCABULARY_CATEGORIES } from '../../../vocabulary/constants/categories';
 import { VOCABULARY_WORDS } from '../../../vocabulary/constants/words';
+import { createGameScene } from './createGameScene';
 import { createInitialGameScene } from './createInitialGameScene';
 
 describe('game scene catalog', () => {
@@ -45,5 +46,17 @@ describe('randomized initial scene', () => {
     expect(scene.creatures).toHaveLength(scene.gameplayConfig.initialCreatureCount);
     expect(scene.creatures.some((creature) => creature.matchesTarget)).toBe(true);
     expect(scene.creatures.some((creature) => !creature.matchesTarget)).toBe(true);
+  });
+
+  test('mixes targets and distractors across both horizontal sides between rounds', () => {
+    const seeds = [0, 0.25, 0.5, 0.75];
+    const creatures = seeds.flatMap((seed) => createGameScene('animals', 0, seed).creatures);
+    const targets = creatures.filter((creature) => creature.matchesTarget);
+    const distractors = creatures.filter((creature) => !creature.matchesTarget);
+
+    expect(targets.some((creature) => creature.xPercent < 50)).toBe(true);
+    expect(targets.some((creature) => creature.xPercent > 50)).toBe(true);
+    expect(distractors.some((creature) => creature.xPercent < 50)).toBe(true);
+    expect(distractors.some((creature) => creature.xPercent > 50)).toBe(true);
   });
 });
