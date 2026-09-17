@@ -6,6 +6,7 @@ import type {
   CreatureViewModel,
   GameScene,
   LetterProjectileSpec,
+  PlayerHitPhase,
   ShotViewModel,
 } from '../../../../../types/gameplay';
 import { CreatureField } from './CreatureField';
@@ -16,6 +17,8 @@ import { ShotTrail } from './ShotTrail';
 
 /*** Render the interactive creature field, dodge band, projectiles, and player. */
 export function GamePlayfield({
+  hitPhase,
+  hitStopped,
   invulnerable,
   letterProjectiles,
   mistakeCreatureId,
@@ -29,19 +32,24 @@ export function GamePlayfield({
   scene,
   shot,
 }: GamePlayfieldProps) {
+  const movementZoneStyle = {
+    height: `${100 - scene.gameplayConfig.movementZoneStartPercent}%`,
+  };
+
   return (
     <section
-      className="playfield"
+      className={hitStopped ? 'playfield playfield--hitstop' : 'playfield'}
       aria-label={`Categoría ${scene.level.title}`}
       onContextMenu={(event) => event.preventDefault()}
-      {...movementHandlers}
+      {...(hitStopped ? {} : movementHandlers)}
     >
       <div className="moon" aria-hidden="true" />
       <div className="hill hill-back" aria-hidden="true" />
       <div className="hill hill-front" aria-hidden="true" />
       <CreatureField
         creatures={scene.creatures}
-        disabled={resolution !== null || scene.phase !== 'playing'}
+        disabled={resolution !== null || scene.phase !== 'playing' || hitStopped}
+        gameplayConfig={scene.gameplayConfig}
         mistakeCreatureId={mistakeCreatureId}
         resolution={resolution}
         onCreatureAction={onCreatureAction}
@@ -55,17 +63,23 @@ export function GamePlayfield({
         />
       ))}
       {shot === null ? null : <ShotTrail key={shot.id} shot={shot} />}
-      <div className="movement-zone" aria-hidden="true">
+      <div className="movement-zone" style={movementZoneStyle} aria-hidden="true">
         <span>mueve</span>
       </div>
       <div className="baseline" aria-hidden="true" />
-      <PlayerCharacter xPercent={playerXPercent} invulnerable={invulnerable} />
+      <PlayerCharacter
+        hitPhase={hitPhase}
+        xPercent={playerXPercent}
+        invulnerable={invulnerable}
+      />
       <GamePhaseOverlay scene={scene} onRestart={onRestart} />
     </section>
   );
 }
 
 interface GamePlayfieldProps {
+  readonly hitPhase: PlayerHitPhase;
+  readonly hitStopped: boolean;
   readonly invulnerable: boolean;
   readonly letterProjectiles: readonly LetterProjectileSpec[];
   readonly mistakeCreatureId: string | null;
