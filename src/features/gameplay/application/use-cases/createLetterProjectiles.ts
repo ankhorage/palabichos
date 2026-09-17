@@ -35,7 +35,6 @@ export function createLetterProjectiles(
       letter,
       startXPercent,
       startYPercent: creature.yPercent,
-      driftPercent,
       fallDistancePercent: config.projectileFallDistancePercent,
       durationMs,
       delayMs,

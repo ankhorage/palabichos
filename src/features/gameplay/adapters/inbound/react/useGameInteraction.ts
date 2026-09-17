@@ -67,7 +67,6 @@ interface GameplayBindingsInput {
 /*** Compose hit, resolution, and lifecycle adapters around shared interaction state. */
 function useGameplayBindings(input: GameplayBindingsInput) {
   const damage = useProjectileDamage({
-    playerXPercent: input.movement.xPercent,
     resetPlayer: input.movement.reset,
     sceneRef: input.runtime.sceneRef,
     setLetterProjectiles: input.feedback.setLetterProjectiles,

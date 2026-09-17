@@ -1,10 +1,11 @@
-import type { PointerEventHandler } from 'react';
+import { type PointerEventHandler, useRef } from 'react';
 
 import type {
   CreatureAction,
   CreatureResolution,
   CreatureViewModel,
   GameScene,
+  HorizontalBounds,
   LetterProjectileSpec,
   PlayerHitPhase,
   ShotViewModel,
@@ -42,8 +43,10 @@ export function GamePlayfield(props: GamePlayfieldProps) {
   );
 }
 
-/*** Render the interactive actors whose presentation can pause during hitstop. */
+/*** Render interactive actors and measure their browser geometry at projectile lane crossings. */
 function PlayfieldActors(props: PlayfieldActorsProps) {
+  const playerElementRef = useRef<HTMLDivElement>(null);
+
   return (
     <>
       <CreatureField
@@ -59,7 +62,13 @@ function PlayfieldActors(props: PlayfieldActorsProps) {
           impacting={props.impactingProjectileId === projectile.id}
           projectile={projectile}
           onComplete={props.onLetterProjectileComplete}
-          onCrossPlayerLane={props.onLetterProjectileCrossPlayerLane}
+          onCrossPlayerLane={(projectileId, projectileBounds) =>
+            props.onLetterProjectileCrossPlayerLane(
+              projectileId,
+              projectileBounds,
+              readHorizontalBounds(playerElementRef.current),
+            )
+          }
         />
       ))}
       {props.shot === null ? null : (
@@ -71,12 +80,20 @@ function PlayfieldActors(props: PlayfieldActorsProps) {
         />
       )}
       <PlayerCharacter
+        elementRef={playerElementRef}
         hitPhase={props.hitPhase}
         xPercent={props.playerXPercent}
         invulnerable={props.invulnerable}
       />
     </>
   );
+}
+
+/*** Read one rendered element's horizontal browser bounds for collision resolution. */
+function readHorizontalBounds(element: HTMLElement | null): HorizontalBounds | null {
+  if (element === null) return null;
+  const bounds = element.getBoundingClientRect();
+  return { left: bounds.left, right: bounds.right };
 }
 
 interface GamePlayfieldProps extends PlayfieldActorsProps {
@@ -94,7 +111,8 @@ interface PlayfieldActorsProps {
   readonly onLetterProjectileComplete: (projectileId: string) => void;
   readonly onLetterProjectileCrossPlayerLane: (
     projectileId: string,
-    impactXPercent: number,
+    projectileBounds: HorizontalBounds,
+    playerBounds: HorizontalBounds | null,
   ) => void;
   readonly playerXPercent: number;
   readonly resolution: CreatureResolution | null;
