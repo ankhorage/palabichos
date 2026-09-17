@@ -14,13 +14,10 @@ export function usePlayerMovement(gameplayConfig: GameplayConfig, enabled = true
   const pointerIdRef = useRef<number | null>(null);
   const context: PlayerMovementContext = { gameplayConfig, pointerIdRef, setXPercent };
   const reset = useCallback(
-    () => setXPercent(gameplayConfig.playerStartXPercent),
+    (nextXPercent = gameplayConfig.playerStartXPercent) => setXPercent(nextXPercent),
     [gameplayConfig.playerStartXPercent],
   );
 
-  useEffect(() => {
-    setXPercent(gameplayConfig.playerStartXPercent);
-  }, [gameplayConfig.playerStartXPercent]);
   useEffect(
     () => bindKeyboardMovement(enabled, gameplayConfig, setXPercent),
     [enabled, gameplayConfig],
@@ -94,7 +91,10 @@ function setPlayerPosition(event: ReactPointerEvent<HTMLElement>, context: Playe
 }
 
 /*** Return whether a pointer event lies inside the broad lower dodge band. */
-function isInsideMovementZone(event: ReactPointerEvent<HTMLElement>, gameplayConfig: GameplayConfig) {
+function isInsideMovementZone(
+  event: ReactPointerEvent<HTMLElement>,
+  gameplayConfig: GameplayConfig,
+) {
   const bounds = event.currentTarget.getBoundingClientRect();
   const yPercent = ((event.clientY - bounds.top) / bounds.height) * 100;
   return yPercent >= gameplayConfig.movementZoneStartPercent;
@@ -112,8 +112,11 @@ function bindKeyboardMovement(
     const direction = keyboardDirection(event.key);
     if (direction === 0) return;
     event.preventDefault();
-    setXPercent((xPercent) =>
-      clampPlayerX(xPercent + direction * gameplayConfig.keyboardStepPercent, gameplayConfig),
+    setXPercent((currentXPercent) =>
+      clampPlayerX(
+        currentXPercent + direction * gameplayConfig.keyboardStepPercent,
+        gameplayConfig,
+      ),
     );
   };
   window.addEventListener('keydown', handleKeyDown);
