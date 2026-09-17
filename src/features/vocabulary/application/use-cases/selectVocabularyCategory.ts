@@ -1,17 +1,14 @@
 import type { VocabularyCategory } from '../../../../types/vocabulary';
 import { getPlayableVocabularyCategories } from './getPlayableVocabularyCategories';
 
-/*** Select one playable category from a deterministic random value. */
+/*** Select one playable category from a deterministic random value and exclusion set. */
 export function selectVocabularyCategory(
   randomValue: number,
   minimumWordCount: number,
-  excludedCategoryId: string | null = null,
+  excludedCategoryIds: readonly string[] = [],
 ): VocabularyCategory {
   const playable = getPlayableVocabularyCategories(minimumWordCount);
-  const candidates =
-    excludedCategoryId === null || playable.length <= 1
-      ? playable
-      : playable.filter((category) => category.id !== excludedCategoryId);
+  const candidates = playable.filter((category) => !excludedCategoryIds.includes(category.id));
 
   if (candidates.length === 0) {
     throw new Error(`No vocabulary category has ${minimumWordCount} playable words.`);

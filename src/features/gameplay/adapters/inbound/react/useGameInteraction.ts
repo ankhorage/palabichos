@@ -41,6 +41,7 @@ export function useGameInteraction(
   return {
     ...bindings.damage,
     ...bindings.lifecycle,
+    correctFeedback: bindings.resolution.correctFeedback,
     letterProjectiles: feedback.letterProjectiles,
     movementHandlers: movement.handlers,
     playerXPercent: movement.xPercent,
@@ -174,7 +175,7 @@ interface CreateInteractionContextInput {
   readonly runtime: InteractionRuntime;
 }
 
-/*** Start translated creature feedback and show its shot trail immediately. */
+/*** Start creature resolution and show its shot trail immediately. */
 function handleCreatureAction(
   creature: CreatureViewModel,
   action: CreatureAction,

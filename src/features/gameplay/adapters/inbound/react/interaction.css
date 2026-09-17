@@ -107,6 +107,14 @@
   text-transform: uppercase;
 }
 
+.movement-zone span.movement-zone-feedback--correct {
+  color: rgba(223, 255, 205, 0.92);
+  font-size: clamp(12px, 3.2vw, 15px);
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 10px rgba(190, 255, 168, 0.24);
+  text-transform: none;
+}
+
 .player {
   transition: left 70ms linear;
   will-change: left;

@@ -30,6 +30,7 @@ export interface HorizontalBounds {
 
 export interface GameplayConfig {
   readonly resolutionFeedbackMs: number;
+  readonly correctFeedbackVisibleMs: number;
   readonly mistakeVisibleMs: number;
   readonly shotVisibleMs: number;
   readonly startingHealth: number;
@@ -94,6 +95,7 @@ export interface GameScene {
   readonly level: LevelDefinition;
   readonly gameplayConfig: GameplayConfig;
   readonly levelIndex: number;
+  readonly playedCategoryIds: readonly string[];
   readonly phase: GamePhase;
   readonly collectedCount: number;
   readonly correctStreak: number;
