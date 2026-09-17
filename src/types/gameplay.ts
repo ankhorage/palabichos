@@ -12,6 +12,8 @@ export type CreatureAction = 'collect' | 'shoot';
 
 export type GameplayConfigId = 'starter';
 
+export type PlayerHitPhase = 'idle' | 'hitstop' | 'respawning';
+
 type CreatureActionOutcome = 'collected' | 'destroyed' | 'mistake' | 'ignored';
 
 interface WordEntry {
