@@ -174,14 +174,14 @@ interface CreateInteractionContextInput {
   readonly runtime: InteractionRuntime;
 }
 
-/*** Start one translated creature resolution and show an immediate shot trail when applicable. */
+/*** Start translated creature feedback and show its shot trail immediately. */
 function handleCreatureAction(
   creature: CreatureViewModel,
   action: CreatureAction,
   context: GameInteractionContext,
 ) {
   if (!context.beginCreatureResolution(creature, action)) return;
-  if (action === 'shoot') showShot(creature, context);
+  showShot(creature, context);
 }
 
 /*** Remove one completed falling letter from React presentation state. */
