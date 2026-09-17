@@ -10,10 +10,11 @@ describe('selectVocabularyCategory', () => {
     expect(first.id).not.toBe(last.id);
   });
 
-  test('excludes the completed category when another playable category exists', () => {
+  test('excludes every category already played in the current cycle', () => {
     const first = selectVocabularyCategory(0, 20);
-    const next = selectVocabularyCategory(0, 20, first.id);
+    const second = selectVocabularyCategory(0, 20, [first.id]);
+    const third = selectVocabularyCategory(0, 20, [first.id, second.id]);
 
-    expect(next.id).not.toBe(first.id);
+    expect(new Set([first.id, second.id, third.id]).size).toBe(3);
   });
 });
