@@ -1,18 +1,9 @@
-import type {
-  CreatureAction,
-  CreatureActionResult,
-  GameplayConfig,
-  GameScene,
-} from '../../../../types/gameplay';
+import type { CreatureActionResult, GameplayConfig, GameScene } from '../../../../types/gameplay';
 import type { VocabularyWord } from '../../../../types/vocabulary';
 import { createCreatureViewModel } from './createCreatureViewModel';
 
 /*** Apply one creature shot and return the next immutable gameplay scene. */
-export function applyCreatureAction(
-  scene: GameScene,
-  creatureId: string,
-  _action: CreatureAction,
-): CreatureActionResult {
+export function applyCreatureAction(scene: GameScene, creatureId: string): CreatureActionResult {
   if (scene.phase !== 'playing') return ignoredResult(scene, creatureId);
 
   const creature = scene.creatures.find((candidate) => candidate.id === creatureId);
