@@ -22,9 +22,7 @@ export function applyCreatureAction(scene: GameScene, creatureId: string): Creat
         : scene.phase;
   const mustKeepTargetAvailable =
     creature.matchesTarget &&
-    !scene.creatures.some(
-      (candidate) => candidate.id !== creature.id && candidate.matchesTarget,
-    );
+    !scene.creatures.some((candidate) => candidate.id !== creature.id && candidate.matchesTarget);
   const replacementWord = selectReplacementWord(scene, mustKeepTargetAvailable);
   const replacement = createCreatureViewModel(
     replacementWord,
