@@ -1,5 +1,7 @@
+export type VocabularyCategoryId = string;
+
 export interface VocabularyCategory {
-  readonly id: string;
+  readonly id: VocabularyCategoryId;
   readonly title: string;
 }
 
@@ -7,7 +9,7 @@ export interface VocabularyWord {
   readonly id: string;
   readonly text: string;
   readonly translation: string;
-  readonly categoryIds: readonly string[];
+  readonly categoryIds: readonly VocabularyCategoryId[];
 }
 
 export interface VocabEntry {
