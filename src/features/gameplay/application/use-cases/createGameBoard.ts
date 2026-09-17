@@ -27,7 +27,12 @@ export function createGameBoard(input: CreateGameBoardInput): readonly CreatureV
     input.targetCategoryId,
     deriveSeed(input.presentationSeed, 0.37),
   );
-  const orderedWords = arrangeBoardWords(targets, distractors, input.config, input.presentationSeed);
+  const orderedWords = arrangeBoardWords(
+    targets,
+    distractors,
+    input.config,
+    input.presentationSeed,
+  );
 
   return createCreatures(orderedWords, input);
 }
@@ -103,7 +108,9 @@ function arrangeBoardWords(
   seed: number,
 ): readonly VocabularyWord[] {
   const words = Array.from({ length: config.initialCreatureCount }).map((_, sequence) => {
-    const targetsBefore = Math.floor((sequence * config.activeTargetCount) / config.initialCreatureCount);
+    const targetsBefore = Math.floor(
+      (sequence * config.activeTargetCount) / config.initialCreatureCount,
+    );
     const targetsAfter = Math.floor(
       ((sequence + 1) * config.activeTargetCount) / config.initialCreatureCount,
     );
