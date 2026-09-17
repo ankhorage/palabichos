@@ -69,7 +69,11 @@ function PlayfieldActors(props: PlayfieldActorsProps) {
           playerLaneYPercent={props.scene.gameplayConfig.playerLaneYPercent}
         />
       )}
-      <PlayerCharacter hitPhase={props.hitPhase} xPercent={props.playerXPercent} invulnerable={props.invulnerable} />
+      <PlayerCharacter
+        hitPhase={props.hitPhase}
+        xPercent={props.playerXPercent}
+        invulnerable={props.invulnerable}
+      />
     </>
   );
 }
