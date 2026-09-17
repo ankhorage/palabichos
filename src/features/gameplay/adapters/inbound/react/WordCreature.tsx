@@ -17,34 +17,12 @@ export function WordCreature({
   resolution,
 }: WordCreatureProps) {
   const { handlers, holding } = useCreatureGesture(creature, onAction, gameplayConfig);
-  const style = {
-    animationDelay: `${creature.animationDelaySeconds}s`,
-    animationDuration:
-      resolution === null
-        ? `${creature.animationDurationSeconds}s`
-        : resolution.isCorrect
-          ? undefined
-          : `${gameplayConfig.mistakeVisibleMs}ms`,
-    left: `${creature.xPercent}%`,
-    top: `${creature.yPercent}%`,
-  };
-  const className = [
-    'word-creature',
-    `word-creature--${creature.variant}`,
-    `word-creature--${creature.motion}`,
-    holding ? 'word-creature--holding' : '',
-    resolution === null ? '' : 'word-creature--resolving',
-    resolution?.isCorrect === true ? 'word-creature--reward' : '',
-    resolution?.isCorrect === false ? 'word-creature--resolution-mistake' : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
 
   return (
     <button
       type="button"
-      className={className}
-      style={style}
+      className={createWordCreatureClassName(creature, holding, resolution)}
+      style={createWordCreatureStyle(creature, gameplayConfig, resolution)}
       aria-label={resolution?.translation ?? creature.word.text}
       disabled={disabled}
       {...handlers}
@@ -75,4 +53,42 @@ interface WordCreatureProps {
   readonly gameplayConfig: GameplayConfig;
   readonly onAction: (creature: CreatureViewModel, action: CreatureAction) => void;
   readonly resolution: CreatureResolution | null;
+}
+
+/*** Build the creature classes for idle, hold, reward, and mistake presentation states. */
+function createWordCreatureClassName(
+  creature: CreatureViewModel,
+  holding: boolean,
+  resolution: CreatureResolution | null,
+) {
+  return [
+    'word-creature',
+    `word-creature--${creature.variant}`,
+    `word-creature--${creature.motion}`,
+    holding ? 'word-creature--holding' : '',
+    resolution === null ? '' : 'word-creature--resolving',
+    resolution?.isCorrect === true ? 'word-creature--reward' : '',
+    resolution?.isCorrect === false ? 'word-creature--resolution-mistake' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+}
+
+/*** Build configured animation and position styles for one creature. */
+function createWordCreatureStyle(
+  creature: CreatureViewModel,
+  gameplayConfig: GameplayConfig,
+  resolution: CreatureResolution | null,
+) {
+  return {
+    animationDelay: `${creature.animationDelaySeconds}s`,
+    animationDuration:
+      resolution === null
+        ? `${creature.animationDurationSeconds}s`
+        : resolution.isCorrect
+          ? undefined
+          : `${gameplayConfig.mistakeVisibleMs}ms`,
+    left: `${creature.xPercent}%`,
+    top: `${creature.yPercent}%`,
+  };
 }
