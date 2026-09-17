@@ -17,9 +17,33 @@ export function applyCreatureAction(
   if (creature === undefined) return ignoredResult(scene, creatureId);
 
   const isCorrect = action === 'collect' ? creature.matchesTarget : !creature.matchesTarget;
-  if (!isCorrect) return mistakeResult(scene, creature, action);
+  const progression = isCorrect ? correctProgression(scene) : mistakeProgression(scene);
+  const collectedCount =
+    action === 'collect' && isCorrect
+      ? Math.min(scene.level.targetCount, scene.collectedCount + 1)
+      : scene.collectedCount;
+  const phase =
+    progression.health === 0
+      ? 'game-over'
+      : collectedCount >= scene.level.targetCount
+        ? 'level-complete'
+        : scene.phase;
+  const replacement = createReplacementCreature(scene);
 
-  return correctResult(scene, creature, action);
+  return {
+    scene: {
+      ...scene,
+      ...progression,
+      collectedCount,
+      phase,
+      creatures: scene.creatures.map((candidate) =>
+        candidate.id === creature.id ? replacement : candidate,
+      ),
+      spawnSequence: scene.spawnSequence + 1,
+    },
+    outcome: action === 'shoot' ? 'destroyed' : 'collected',
+    creatureId,
+  };
 }
 
 /*** Keep a non-actionable scene unchanged. */
@@ -27,78 +51,24 @@ function ignoredResult(scene: GameScene, creatureId: string): CreatureActionResu
   return { scene, outcome: 'ignored', creatureId };
 }
 
-/*** Penalize one wrong decision while still physically destroying a wrongly shot word. */
-function mistakeResult(
-  scene: GameScene,
-  creature: CreatureViewModel,
-  action: CreatureAction,
-): CreatureActionResult {
-  const health = Math.max(0, scene.health - scene.gameplayConfig.wrongActionDamage);
-  const shotReplacement = action === 'shoot' ? createReplacementCreature(scene) : null;
+/*** Increment the perfect-action streak and award a configured extra life at its threshold. */
+function correctProgression(scene: GameScene) {
+  const nextStreak = scene.correctStreak + 1;
+  const earnsExtraLife = nextStreak >= scene.gameplayConfig.correctActionsPerExtraLife;
 
   return {
-    scene: {
-      ...scene,
-      correctStreak: 0,
-      health,
-      phase: health === 0 ? 'game-over' : scene.phase,
-      creatures:
-        shotReplacement === null
-          ? scene.creatures
-          : scene.creatures.map((candidate) =>
-              candidate.id === creature.id ? shotReplacement : candidate,
-            ),
-      spawnSequence: scene.spawnSequence + (shotReplacement === null ? 0 : 1),
-    },
-    outcome: 'mistake',
-    creatureId: creature.id,
+    correctStreak: earnsExtraLife ? 0 : nextStreak,
+    health: earnsExtraLife
+      ? Math.min(scene.gameplayConfig.maxHealth, scene.health + 1)
+      : scene.health,
   };
 }
 
-/*** Apply one correct word decision, its streak reward, progress, and replacement. */
-function correctResult(
-  scene: GameScene,
-  creature: CreatureViewModel,
-  action: CreatureAction,
-): CreatureActionResult {
-  const collectedCount = nextCollectedCount(scene, action);
-  const phase = collectedCount >= scene.level.targetCount ? 'level-complete' : scene.phase;
-  const reward = correctActionReward(scene);
-  const replacement = createReplacementCreature(scene);
-
-  return {
-    scene: {
-      ...scene,
-      collectedCount,
-      correctStreak: reward.correctStreak,
-      health: reward.health,
-      phase,
-      creatures: scene.creatures.map((candidate) =>
-        candidate.id === creature.id ? replacement : candidate,
-      ),
-      spawnSequence: scene.spawnSequence + 1,
-    },
-    outcome: action === 'collect' ? 'collected' : 'destroyed',
-    creatureId: creature.id,
-  };
-}
-
-/*** Increment collection progress only for a correct collect action. */
-function nextCollectedCount(scene: GameScene, action: CreatureAction) {
-  if (action !== 'collect') return scene.collectedCount;
-  return Math.min(scene.level.targetCount, scene.collectedCount + 1);
-}
-
-/*** Advance the correct-action streak and award a configured extra life at its threshold. */
-function correctActionReward(scene: GameScene) {
-  const correctStreak = scene.correctStreak + 1;
-  const awardsExtraLife = correctStreak >= scene.gameplayConfig.correctActionsPerExtraLife;
-
-  if (!awardsExtraLife) return { correctStreak, health: scene.health };
-
+/*** Apply configured wrong-action damage and reset the perfect-action streak. */
+function mistakeProgression(scene: GameScene) {
   return {
     correctStreak: 0,
-    health: Math.min(scene.gameplayConfig.maxHealth, scene.health + 1),
+    health: Math.max(0, scene.health - scene.gameplayConfig.wrongActionDamage),
   };
 }
 
