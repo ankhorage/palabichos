@@ -24,7 +24,6 @@ export function GameScreen({ scene }: GameScreenProps) {
         hitStopped={interaction.hitStopped}
         invulnerable={interaction.invulnerable}
         letterProjectiles={interaction.letterProjectiles}
-        mistakeCreatureId={interaction.mistakeCreatureId}
         playerXPercent={interaction.playerXPercent}
         resolution={interaction.resolution}
         movementHandlers={interaction.movementHandlers}
