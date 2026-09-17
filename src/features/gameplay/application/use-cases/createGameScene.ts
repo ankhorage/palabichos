@@ -9,6 +9,7 @@ import { getVocabularyCategory } from '../../../vocabulary/application/use-cases
 import { getVocabularyWordsForCategory } from '../../../vocabulary/application/use-cases/getVocabularyWordsForCategory';
 import { getVocabularyWordsOutsideCategory } from '../../../vocabulary/application/use-cases/getVocabularyWordsOutsideCategory';
 import { GAMEPLAY_CONFIGS } from '../../constants/gameplayConfigs';
+import { getDistractorCategoryId } from '../../utils/getDistractorCategoryId';
 import { createCreatureViewModel } from './createCreatureViewModel';
 
 /*** Build a fresh round for one selected vocabulary category and presentation seed. */
@@ -61,10 +62,15 @@ export function createGameScene(
     usedWordIds,
     spawnSequence: 0,
     presentationSeed,
+    recentDistractorCategoryIds: createInitialDistractorCategoryHistory(
+      creatures,
+      category.id,
+      gameplayConfig.distractorRecentCategoryWindow,
+    ),
   };
 }
 
-/*** Validate that one round has enough target and distractor vocabulary for its active mix. */
+/*** Validate that one round has enough vocabulary and a coherent churn configuration. */
 function validateRoundPools(
   categoryId: string,
   targetWords: readonly VocabularyWord[],
@@ -85,6 +91,12 @@ function validateRoundPools(
     distractorWords.length < activeDistractorCount
   ) {
     throw new Error('Round vocabulary pool cannot fill the configured active creature mix.');
+  }
+  if (
+    config.distractorRetireMinAgeCorrectShots <= 0 ||
+    config.distractorRetireMaxAgeCorrectShots < config.distractorRetireMinAgeCorrectShots
+  ) {
+    throw new Error('Distractor churn ages must define a positive minimum no greater than maximum.');
   }
 }
 
@@ -191,4 +203,19 @@ function createInitialCreatures(
     );
     return [...creatures, creature];
   }, []);
+}
+
+/*** Seed recent distractor-category history from the initial active field. */
+function createInitialDistractorCategoryHistory(
+  creatures: readonly CreatureViewModel[],
+  targetCategoryId: string,
+  windowSize: number,
+) {
+  return creatures
+    .filter((creature) => !creature.matchesTarget)
+    .flatMap((creature) => {
+      const categoryId = getDistractorCategoryId(creature.word, targetCategoryId);
+      return categoryId === null ? [] : [categoryId];
+    })
+    .slice(-windowSize);
 }
