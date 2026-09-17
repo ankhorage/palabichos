@@ -49,7 +49,7 @@ export function WordCreature({
       disabled={disabled}
       {...handlers}
     >
-      <CollectRing active={holding && !disabled} />
+      <CollectRing active={holding && !disabled} durationMs={gameplayConfig.collectHoldMs} />
       <span className="antenna antenna-left" aria-hidden="true" />
       <span className="antenna antenna-right" aria-hidden="true" />
       <span className="creature-face" aria-hidden="true">
