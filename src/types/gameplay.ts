@@ -34,8 +34,10 @@ export interface GameplayConfig {
   readonly projectileDamage: number;
   readonly roundTargetCount: number;
   readonly initialCreatureCount: number;
-  readonly targetSpawnsPerCycle: number;
-  readonly spawnCycleLength: number;
+  readonly activeTargetCount: number;
+  readonly creatureMinimumDistancePercent: number;
+  readonly distractorRetireEveryCorrectShots: number;
+  readonly distractorPuffVisibleMs: number;
   readonly movementZoneStartPercent: number;
   readonly playerMinXPercent: number;
   readonly playerMaxXPercent: number;
@@ -75,6 +77,7 @@ export interface CreatureViewModel extends CreatureAppearance {
   readonly id: string;
   readonly word: VocabularyWord;
   readonly matchesTarget: boolean;
+  readonly spawnSequence: number;
 }
 
 export interface CreatureResolution {
@@ -105,6 +108,7 @@ export interface CreatureActionResult {
   readonly scene: GameScene;
   readonly outcome: CreatureActionOutcome;
   readonly creatureId: string;
+  readonly retiredCreature: CreatureViewModel | null;
   readonly vocabWord: VocabularyWord | null;
 }
 

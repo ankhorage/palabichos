@@ -44,6 +44,7 @@ export function useCreatureResolution(input: CreatureResolutionInput) {
 interface CreatureResolutionInput {
   readonly letterSequenceRef: MutableRefObject<number>;
   readonly onCorrectWordResolved: (wordId: string) => void;
+  readonly onDistractorRetired: (creature: CreatureViewModel) => void;
   readonly sceneRef: MutableRefObject<GameScene>;
   readonly setLetterProjectiles: Dispatch<SetStateAction<readonly LetterProjectileSpec[]>>;
   readonly setScene: Dispatch<SetStateAction<GameScene>>;
@@ -82,7 +83,7 @@ function beginCreatureResolution(
   return true;
 }
 
-/*** Commit the delayed shot, capture correct vocabulary, and punish only wrong shots with letters. */
+/*** Commit the delayed shot, capture correct vocabulary, and surface neutral distractor retirement. */
 function completeCreatureResolution(
   creature: CreatureViewModel,
   resolution: CreatureResolution,
@@ -93,6 +94,7 @@ function completeCreatureResolution(
   context.sceneRef.current = result.scene;
   context.setScene(result.scene);
   if (result.vocabWord !== null) context.onCorrectWordResolved(result.vocabWord.id);
+  if (result.retiredCreature !== null) context.onDistractorRetired(result.retiredCreature);
   if (!resolution.isCorrect) emitLetterProjectiles(creature, scene, context);
   context.resolutionRef.current = null;
   context.setResolution(null);

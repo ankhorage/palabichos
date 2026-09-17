@@ -29,6 +29,49 @@
   outline-offset: 5px;
 }
 
+.distractor-puff {
+  position: absolute;
+  z-index: 6;
+  width: 72px;
+  height: 72px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: distractor-puff 360ms ease-out forwards;
+}
+
+.distractor-puff span {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(220, 231, 255, 0.72);
+  box-shadow: 0 0 12px rgba(190, 210, 255, 0.3);
+}
+
+.distractor-puff span:nth-child(1) {
+  top: 19px;
+  left: 13px;
+}
+
+.distractor-puff span:nth-child(2) {
+  top: 11px;
+  right: 14px;
+  width: 19px;
+  height: 19px;
+}
+
+.distractor-puff span:nth-child(3) {
+  right: 10px;
+  bottom: 16px;
+}
+
+.distractor-puff span:nth-child(4) {
+  bottom: 10px;
+  left: 22px;
+  width: 18px;
+  height: 18px;
+}
+
 .shot-layer {
   position: absolute;
   z-index: 5;
@@ -153,6 +196,17 @@
   animation: player-respawn-blink 140ms steps(2, end) infinite;
 }
 
+@keyframes distractor-puff {
+  0% {
+    opacity: 0.82;
+    transform: translate(-50%, -50%) scale(0.72);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.45);
+  }
+}
+
 @keyframes shot-line-fade {
   0% {
     opacity: 0;
@@ -201,6 +255,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .distractor-puff,
   .player--invulnerable,
   .player--hitstop,
   .player--respawning,

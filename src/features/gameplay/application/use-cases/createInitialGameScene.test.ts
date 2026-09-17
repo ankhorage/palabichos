@@ -35,8 +35,10 @@ describe('randomized initial scene', () => {
     expect(last.phase).toBe('playing');
   });
 
-  test('starts with configured health, progress, and a mixed creature set', () => {
+  test('starts with the configured balanced active answer mix', () => {
     const scene = createInitialGameScene(0);
+    const targetCount = scene.creatures.filter((creature) => creature.matchesTarget).length;
+    const distractorCount = scene.creatures.filter((creature) => !creature.matchesTarget).length;
 
     expect(scene.level.targetCount).toBe(20);
     expect(scene.collectedCount).toBe(0);
@@ -44,8 +46,21 @@ describe('randomized initial scene', () => {
     expect(scene.health).toBe(5);
     expect(scene.gameplayConfig.maxHealth).toBe(7);
     expect(scene.creatures).toHaveLength(scene.gameplayConfig.initialCreatureCount);
-    expect(scene.creatures.some((creature) => creature.matchesTarget)).toBe(true);
-    expect(scene.creatures.some((creature) => !creature.matchesTarget)).toBe(true);
+    expect(targetCount).toBe(scene.gameplayConfig.activeTargetCount);
+    expect(distractorCount).toBe(
+      scene.gameplayConfig.initialCreatureCount - scene.gameplayConfig.activeTargetCount,
+    );
+  });
+
+  test('starts distractors from different non-target vocabulary categories', () => {
+    const scene = createGameScene('animals');
+    const distractors = scene.creatures.filter((creature) => !creature.matchesTarget);
+    const sourceCategories = distractors.map((creature) =>
+      creature.word.categoryIds.find((categoryId) => categoryId !== scene.level.targetCategoryId),
+    );
+
+    expect(sourceCategories.every((categoryId) => categoryId !== undefined)).toBe(true);
+    expect(new Set(sourceCategories).size).toBe(distractors.length);
   });
 
   test('mixes targets and distractors across both horizontal sides between rounds', () => {

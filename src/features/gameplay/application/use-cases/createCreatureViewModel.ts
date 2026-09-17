@@ -7,13 +7,19 @@ export function createCreatureViewModel(
   sequence: number,
   targetCategoryId: string,
   presentationSeed = 0,
+  occupiedCreatures: readonly CreatureViewModel[] = [],
+  minimumDistancePercent = 0,
 ): CreatureViewModel {
-  const positionOffset = createPositionOffset(presentationSeed);
-  const position = POSITIONS[(sequence + positionOffset) % POSITIONS.length];
+  const position = selectPosition(
+    sequence,
+    presentationSeed,
+    occupiedCreatures,
+    minimumDistancePercent,
+  );
   const variant = VARIANTS[sequence % VARIANTS.length];
   const motion = MOTIONS[sequence % MOTIONS.length];
 
-  if (position === undefined || variant === undefined || motion === undefined) {
+  if (variant === undefined || motion === undefined) {
     throw new Error('Creature presentation catalogs must not be empty.');
   }
 
@@ -21,6 +27,7 @@ export function createCreatureViewModel(
     id: `creature-${sequence}-${word.id}`,
     word,
     matchesTarget: word.categoryIds.includes(targetCategoryId),
+    spawnSequence: sequence,
     xPercent: position.xPercent,
     yPercent: position.yPercent,
     variant,
@@ -28,6 +35,45 @@ export function createCreatureViewModel(
     animationDelaySeconds: -((sequence % 7) * 0.55),
     animationDurationSeconds: 5.8 + (sequence % 6) * 0.42,
   };
+}
+
+/*** Select the first deterministic presentation slot with enough distance from active creatures. */
+function selectPosition(
+  sequence: number,
+  presentationSeed: number,
+  occupiedCreatures: readonly CreatureViewModel[],
+  minimumDistancePercent: number,
+): CreaturePosition {
+  const positionOffset = createPositionOffset(presentationSeed);
+  const startIndex = (sequence + positionOffset) % POSITIONS.length;
+  const candidates = Array.from(
+    { length: POSITIONS.length },
+    (_, offset) => POSITIONS[(startIndex + offset) % POSITIONS.length] ?? POSITIONS[0],
+  );
+  const position = candidates.find((candidate) =>
+    isPositionAvailable(candidate, occupiedCreatures, minimumDistancePercent),
+  );
+
+  if (position === undefined) {
+    throw new Error('Creature presentation cannot find a readable free position.');
+  }
+
+  return position;
+}
+
+type CreaturePosition = (typeof POSITIONS)[number];
+
+/*** Return whether one candidate position keeps the configured distance from active creatures. */
+function isPositionAvailable(
+  position: CreaturePosition,
+  occupiedCreatures: readonly CreatureViewModel[],
+  minimumDistancePercent: number,
+) {
+  return occupiedCreatures.every(
+    (creature) =>
+      Math.hypot(position.xPercent - creature.xPercent, position.yPercent - creature.yPercent) >=
+      minimumDistancePercent,
+  );
 }
 
 /*** Convert one round random seed into a stable presentation-slot offset. */
