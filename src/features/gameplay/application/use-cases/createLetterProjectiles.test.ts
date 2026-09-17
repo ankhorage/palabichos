@@ -17,10 +17,15 @@ describe('createLetterProjectiles', () => {
 
     const creature = createCreatureViewModel(word, 99, scene.level.targetCategoryId);
     const projectiles = createLetterProjectiles(creature, 4, scene.gameplayConfig);
-    const [firstProjectile] = projectiles;
+    const firstProjectile = projectiles.at(0);
 
     expect(projectiles.map((projectile) => projectile.letter).join('')).toBe('Käse');
-    expect(firstProjectile?.driftPercent).toBe(-scene.gameplayConfig.projectileFarDriftPercent);
+    expect(firstProjectile?.impactXPercent).toBe(
+      Math.max(
+        scene.gameplayConfig.projectileMinXPercent,
+        (firstProjectile?.startXPercent ?? 0) - scene.gameplayConfig.projectileFarDriftPercent,
+      ),
+    );
     expect(firstProjectile?.fallDistancePercent).toBe(
       scene.gameplayConfig.projectileFallDistancePercent,
     );
