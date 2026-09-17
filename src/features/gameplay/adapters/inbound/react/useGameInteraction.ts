@@ -13,47 +13,38 @@ import { usePlayerMovement } from './usePlayerMovement';
 import { useProjectileDamage } from './useProjectileDamage';
 
 /*** Own browser gameplay adapters while delegating decisions to pure application use cases. */
-export function useGameInteraction(initialScene: GameScene) {
+export function useGameInteraction(
+  initialScene: GameScene,
+  randomSource: () => number,
+  onCorrectWordResolved: (wordId: string) => void,
+) {
   const [scene, setScene] = useState(initialScene);
   const movement = usePlayerMovement(scene.gameplayConfig, scene.phase === 'playing');
   const feedback = useTransientFeedbackState();
   const runtime = useInteractionRuntime(initialScene);
-  const damage = useProjectileDamage({
-    playerXPercent: movement.xPercent,
-    resetPlayer: movement.reset,
-    sceneRef: runtime.sceneRef,
-    setLetterProjectiles: feedback.setLetterProjectiles,
-    setScene,
-  });
-  const resolution = useCreatureResolution({
-    letterSequenceRef: runtime.letterSequenceRef,
-    sceneRef: runtime.sceneRef,
-    setLetterProjectiles: feedback.setLetterProjectiles,
-    setScene,
-  });
-  const lifecycle = useGameLifecycle({
-    resetInvulnerability: damage.resetInvulnerability,
-    resetPlayer: movement.reset,
+  const bindings = useGameplayBindings({
+    feedback,
+    movement,
+    onCorrectWordResolved,
+    randomSource,
+    runtime,
     scene,
-    sceneRef: runtime.sceneRef,
-    setLetterProjectiles: feedback.setLetterProjectiles,
     setScene,
-    setShot: feedback.setShot,
   });
   const context = createInteractionContext({
     feedback,
     playerXPercent: movement.xPercent,
-    resolution,
+    resolution: bindings.resolution,
     runtime,
   });
 
   return {
-    ...damage,
-    ...lifecycle,
+    ...bindings.damage,
+    ...bindings.lifecycle,
     letterProjectiles: feedback.letterProjectiles,
     movementHandlers: movement.handlers,
     playerXPercent: movement.xPercent,
-    resolution: resolution.resolution,
+    resolution: bindings.resolution.resolution,
     scene,
     shot: feedback.shot,
     onCreatureAction: (creature: CreatureViewModel, action: CreatureAction) =>
@@ -61,6 +52,45 @@ export function useGameInteraction(initialScene: GameScene) {
     onLetterProjectileComplete: (projectileId: string) =>
       removeLetterProjectile(projectileId, feedback.setLetterProjectiles),
   };
+}
+
+interface GameplayBindingsInput {
+  readonly feedback: TransientFeedbackState;
+  readonly movement: ReturnType<typeof usePlayerMovement>;
+  readonly onCorrectWordResolved: (wordId: string) => void;
+  readonly randomSource: () => number;
+  readonly runtime: InteractionRuntime;
+  readonly scene: GameScene;
+  readonly setScene: Dispatch<SetStateAction<GameScene>>;
+}
+
+/*** Compose hit, resolution, and lifecycle adapters around shared interaction state. */
+function useGameplayBindings(input: GameplayBindingsInput) {
+  const damage = useProjectileDamage({
+    playerXPercent: input.movement.xPercent,
+    resetPlayer: input.movement.reset,
+    sceneRef: input.runtime.sceneRef,
+    setLetterProjectiles: input.feedback.setLetterProjectiles,
+    setScene: input.setScene,
+  });
+  const resolution = useCreatureResolution({
+    letterSequenceRef: input.runtime.letterSequenceRef,
+    onCorrectWordResolved: input.onCorrectWordResolved,
+    sceneRef: input.runtime.sceneRef,
+    setLetterProjectiles: input.feedback.setLetterProjectiles,
+    setScene: input.setScene,
+  });
+  const lifecycle = useGameLifecycle({
+    randomSource: input.randomSource,
+    resetInvulnerability: damage.resetInvulnerability,
+    resetPlayer: input.movement.reset,
+    scene: input.scene,
+    sceneRef: input.runtime.sceneRef,
+    setLetterProjectiles: input.feedback.setLetterProjectiles,
+    setScene: input.setScene,
+    setShot: input.feedback.setShot,
+  });
+  return { damage, lifecycle, resolution };
 }
 
 interface GameInteractionContext {

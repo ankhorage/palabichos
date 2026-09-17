@@ -1,7 +1,7 @@
 import type { GameScene } from '../../../../types/gameplay';
 import { createGameScene } from './createGameScene';
 
-/*** Rebuild the current catalog level with fresh health, progress, and creatures. */
+/*** Restart the current category as a fresh round with reset round-local word usage. */
 export function restartGameScene(scene: GameScene): GameScene {
-  return createGameScene(scene.levelIndex);
+  return createGameScene(scene.level.targetCategoryId, scene.levelIndex);
 }

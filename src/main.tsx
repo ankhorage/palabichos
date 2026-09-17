@@ -10,7 +10,7 @@ if (rootElement === null) {
   throw new Error('Palabichos requires a #root element.');
 }
 
-const scene = createInitialGameScene();
+const scene = createInitialGameScene(Math.random());
 
 createRoot(rootElement).render(
   <StrictMode>

@@ -21,6 +21,7 @@ export function useGameLifecycle(input: GameLifecycleInput) {
 }
 
 interface GameLifecycleInput extends SceneReplacementContext {
+  readonly randomSource: () => number;
   readonly scene: GameScene;
 }
 
@@ -33,8 +34,9 @@ interface SceneReplacementContext {
   readonly setShot: Dispatch<SetStateAction<ShotViewModel | null>>;
 }
 
-/*** Schedule the configured success pause before advancing to the next catalog level. */
+/*** Schedule the configured success pause before advancing to another playable category. */
 function useAutomaticLevelAdvance({
+  randomSource,
   resetInvulnerability,
   resetPlayer,
   scene,
@@ -48,20 +50,20 @@ function useAutomaticLevelAdvance({
   useEffect(() => {
     if (scene.phase !== 'level-complete') return undefined;
 
-    transitionTimerRef.current = window.setTimeout(
-      () =>
-        replaceScene(advanceGameScene(sceneRef.current), {
-          resetInvulnerability,
-          resetPlayer,
-          sceneRef,
-          setLetterProjectiles,
-          setScene,
-          setShot,
-        }),
-      scene.gameplayConfig.levelCompleteVisibleMs,
-    );
+    transitionTimerRef.current = window.setTimeout(() => {
+      const nextScene = advanceGameScene(sceneRef.current, randomSource());
+      replaceScene(nextScene, {
+        resetInvulnerability,
+        resetPlayer,
+        sceneRef,
+        setLetterProjectiles,
+        setScene,
+        setShot,
+      });
+    }, scene.gameplayConfig.levelCompleteVisibleMs);
     return () => clearTransitionTimer(transitionTimerRef);
   }, [
+    randomSource,
     resetInvulnerability,
     resetPlayer,
     scene.gameplayConfig.levelCompleteVisibleMs,
@@ -74,7 +76,11 @@ function useAutomaticLevelAdvance({
 }
 
 /*** Select the transient-state fields needed when rebuilding a gameplay scene. */
-function replacementContext({ scene: _scene, ...context }: GameLifecycleInput) {
+function replacementContext({
+  randomSource: _randomSource,
+  scene: _scene,
+  ...context
+}: GameLifecycleInput) {
   return context;
 }
 

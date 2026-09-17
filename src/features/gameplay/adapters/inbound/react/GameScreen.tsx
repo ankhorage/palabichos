@@ -4,13 +4,15 @@ import './lifecycle.css';
 import './resolution.css';
 
 import type { GameScene } from '../../../../../types/gameplay';
+import { useVocabLibrary } from '../../../../vocabulary/adapters/inbound/react/useVocabLibrary';
 import { GameHeader } from './GameHeader';
 import { GamePlayfield } from './GamePlayfield';
 import { useGameInteraction } from './useGameInteraction';
 
-/*** Compose the mobile-first Palabichos scene from gameplay state and browser adapters. */
+/*** Compose the mobile-first Palabichos scene from gameplay and Vocab browser adapters. */
 export function GameScreen({ scene }: GameScreenProps) {
-  const interaction = useGameInteraction(scene);
+  const vocab = useVocabLibrary();
+  const interaction = useGameInteraction(scene, Math.random, vocab.recordWord);
 
   return (
     <main className="game-screen" aria-label="Palabichos">

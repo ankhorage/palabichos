@@ -5,30 +5,34 @@ import { createGameScene } from './createGameScene';
 import { restartGameScene } from './restartGameScene';
 
 describe('game lifecycle', () => {
-  test('advances ANIMALES to a fresh COMIDA scene', () => {
-    const completed = createGameScene(0);
-    const next = advanceGameScene({ ...completed, collectedCount: 20, phase: 'level-complete' });
+  test('advances to another playable category without immediate repetition', () => {
+    const completed = createGameScene('animals');
+    const next = advanceGameScene(
+      { ...completed, collectedCount: completed.level.targetCount, phase: 'level-complete' },
+      0,
+    );
 
-    expect(next.level.title).toBe('COMIDA');
+    expect(next.level.targetCategoryId).not.toBe('animals');
     expect(next.levelIndex).toBe(1);
     expect(next.phase).toBe('playing');
     expect(next.collectedCount).toBe(0);
-    expect(next.health).toBe(5);
   });
 
-  test('restarts the current level with fresh state', () => {
-    const failed = createGameScene(1);
+  test('restarts the current category and resets round-local word usage', () => {
+    const initial = createGameScene('food', 3);
+    const usedDuringRound = [...initial.usedWordIds, 'synthetic-used-word'];
     const restarted = restartGameScene({
-      ...failed,
+      ...initial,
       collectedCount: 8,
       health: 0,
       phase: 'game-over',
+      usedWordIds: usedDuringRound,
     });
 
-    expect(restarted.level.title).toBe('COMIDA');
-    expect(restarted.levelIndex).toBe(1);
+    expect(restarted.level.targetCategoryId).toBe('food');
+    expect(restarted.levelIndex).toBe(3);
     expect(restarted.phase).toBe('playing');
-    expect(restarted.collectedCount).toBe(0);
-    expect(restarted.health).toBe(5);
+    expect(restarted.usedWordIds).toEqual(initial.usedWordIds);
+    expect(restarted.health).toBe(restarted.gameplayConfig.startingHealth);
   });
 });

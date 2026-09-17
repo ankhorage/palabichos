@@ -1,4 +1,4 @@
-type WordCategory = 'animals' | 'food' | 'home' | 'transport';
+import type { VocabularyWord } from './vocabulary';
 
 type CreatureVariant = 'berry' | 'mint' | 'sun' | 'lavender';
 
@@ -14,16 +14,7 @@ export type PlayerHitPhase = 'idle' | 'hitstop' | 'hidden' | 'respawning';
 
 type CreatureActionOutcome = 'collected' | 'destroyed' | 'ignored';
 
-interface WordEntry {
-  readonly id: string;
-  readonly text: string;
-  readonly translation: string;
-  readonly categories: readonly WordCategory[];
-}
-
-interface CreatureSeed {
-  readonly id: string;
-  readonly word: WordEntry;
+interface CreatureAppearance {
   readonly xPercent: number;
   readonly yPercent: number;
   readonly variant: CreatureVariant;
@@ -43,6 +34,10 @@ export interface GameplayConfig {
   readonly correctActionsPerExtraLife: number;
   readonly wrongActionDamage: number;
   readonly projectileDamage: number;
+  readonly roundTargetCount: number;
+  readonly initialCreatureCount: number;
+  readonly targetSpawnsPerCycle: number;
+  readonly spawnCycleLength: number;
   readonly movementZoneStartPercent: number;
   readonly playerMinXPercent: number;
   readonly playerMaxXPercent: number;
@@ -69,18 +64,18 @@ export interface GameplayConfig {
   readonly playerRespawnBlinkMs: number;
 }
 
-export interface LevelDefinition {
+interface LevelDefinition {
   readonly id: string;
   readonly number: number;
   readonly title: string;
-  readonly targetCategory: WordCategory;
+  readonly targetCategoryId: string;
   readonly targetCount: number;
   readonly gameplayConfigId: GameplayConfigId;
-  readonly initialCreatures: readonly CreatureSeed[];
-  readonly respawnCreatures: readonly CreatureSeed[];
 }
 
-export interface CreatureViewModel extends CreatureSeed {
+export interface CreatureViewModel extends CreatureAppearance {
+  readonly id: string;
+  readonly word: VocabularyWord;
   readonly matchesTarget: boolean;
 }
 
@@ -102,6 +97,8 @@ export interface GameScene {
   readonly correctStreak: number;
   readonly health: number;
   readonly creatures: readonly CreatureViewModel[];
+  readonly remainingWords: readonly VocabularyWord[];
+  readonly usedWordIds: readonly string[];
   readonly spawnSequence: number;
 }
 
@@ -109,6 +106,7 @@ export interface CreatureActionResult {
   readonly scene: GameScene;
   readonly outcome: CreatureActionOutcome;
   readonly creatureId: string;
+  readonly vocabWord: VocabularyWord | null;
 }
 
 export interface ShotViewModel {
