@@ -10,6 +10,7 @@ import type {
   ShotViewModel,
 } from '../../../../../types/gameplay';
 import { CreatureField } from './CreatureField';
+import { DistractorPuff } from './DistractorPuff';
 import { GamePhaseOverlay } from './GamePhaseOverlay';
 import { LetterProjectile } from './LetterProjectile';
 import { PlayerCharacter } from './PlayerCharacter';
@@ -53,6 +54,9 @@ function PlayfieldActors(props: PlayfieldActorsProps) {
         resolution={props.resolution}
         onCreatureAction={props.onCreatureAction}
       />
+      {props.retiredCreature === null ? null : (
+        <DistractorPuff creature={props.retiredCreature} />
+      )}
       {props.letterProjectiles.map((projectile) => (
         <LetterProjectile
           key={projectile.id}
@@ -98,6 +102,7 @@ interface PlayfieldActorsProps {
   ) => void;
   readonly playerXPercent: number;
   readonly resolution: CreatureResolution | null;
+  readonly retiredCreature: CreatureViewModel | null;
   readonly scene: GameScene;
   readonly shot: ShotViewModel | null;
 }

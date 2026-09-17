@@ -1,4 +1,8 @@
-import type { CreatureActionResult, GameplayConfig, GameScene } from '../../../../types/gameplay';
+import type {
+  CreatureActionResult,
+  CreatureViewModel,
+  GameScene,
+} from '../../../../types/gameplay';
 import type { VocabularyWord } from '../../../../types/vocabulary';
 import { createCreatureViewModel } from './createCreatureViewModel';
 
@@ -20,39 +24,111 @@ export function applyCreatureAction(scene: GameScene, creatureId: string): Creat
       : collectedCount >= scene.level.targetCount
         ? 'level-complete'
         : scene.phase;
-  const mustKeepTargetAvailable =
-    creature.matchesTarget &&
-    !scene.creatures.some((candidate) => candidate.id !== creature.id && candidate.matchesTarget);
-  const replacementWord = selectReplacementWord(scene, mustKeepTargetAvailable);
-  const replacement = createCreatureViewModel(
-    replacementWord,
-    scene.gameplayConfig.initialCreatureCount + scene.spawnSequence,
-    scene.level.targetCategoryId,
-    scene.presentationSeed,
-  );
+  const progressedScene = {
+    ...scene,
+    ...progression,
+    collectedCount,
+    phase,
+  };
+  const replacedScene = replaceCreature(progressedScene, creature.id, creature.matchesTarget);
+  const retirement = shouldRetireDistractor(replacedScene, isCorrect)
+    ? retireOldestDistractor(replacedScene)
+    : { scene: replacedScene, retiredCreature: null };
 
   return {
-    scene: {
-      ...scene,
-      ...progression,
-      collectedCount,
-      phase,
-      creatures: scene.creatures.map((candidate) =>
-        candidate.id === creature.id ? replacement : candidate,
-      ),
-      remainingWords: scene.remainingWords.filter((word) => word.id !== replacementWord.id),
-      usedWordIds: [...scene.usedWordIds, replacementWord.id],
-      spawnSequence: scene.spawnSequence + 1,
-    },
+    scene: retirement.scene,
     outcome: 'destroyed',
     creatureId,
+    retiredCreature: retirement.retiredCreature,
     vocabWord: isCorrect ? creature.word : null,
   };
 }
 
 /*** Keep a non-actionable scene unchanged. */
 function ignoredResult(scene: GameScene, creatureId: string): CreatureActionResult {
-  return { scene, outcome: 'ignored', creatureId, vocabWord: null };
+  return {
+    scene,
+    outcome: 'ignored',
+    creatureId,
+    retiredCreature: null,
+    vocabWord: null,
+  };
+}
+
+/*** Replace one active creature with an unused word of the same answer class. */
+function replaceCreature(
+  scene: GameScene,
+  creatureId: string,
+  matchesTarget: boolean,
+): GameScene {
+  const replacementWord = selectReplacementWord(scene, matchesTarget);
+  const occupiedCreatures = scene.creatures.filter((creature) => creature.id !== creatureId);
+  const replacement = createCreatureViewModel(
+    replacementWord,
+    scene.gameplayConfig.initialCreatureCount + scene.spawnSequence,
+    scene.level.targetCategoryId,
+    scene.presentationSeed,
+    occupiedCreatures,
+    scene.gameplayConfig.creatureMinimumDistancePercent,
+  );
+
+  return {
+    ...scene,
+    creatures: scene.creatures.map((creature) =>
+      creature.id === creatureId ? replacement : creature,
+    ),
+    remainingWords: scene.remainingWords.filter((word) => word.id !== replacementWord.id),
+    usedWordIds: [...scene.usedWordIds, replacementWord.id],
+    spawnSequence: scene.spawnSequence + 1,
+  };
+}
+
+/*** Return whether this successful shot reaches the configured neutral distractor-rotation cadence. */
+function shouldRetireDistractor(scene: GameScene, isCorrect: boolean) {
+  return (
+    isCorrect &&
+    scene.phase === 'playing' &&
+    scene.collectedCount > 0 &&
+    scene.collectedCount % scene.gameplayConfig.distractorRetireEveryCorrectShots === 0
+  );
+}
+
+interface DistractorRetirement {
+  readonly scene: GameScene;
+  readonly retiredCreature: CreatureViewModel | null;
+}
+
+/*** Retire the oldest active distractor and replace it neutrally with a fresh distractor. */
+function retireOldestDistractor(scene: GameScene): DistractorRetirement {
+  const distractors = scene.creatures.filter((creature) => !creature.matchesTarget);
+  const retiredCreature = distractors.reduce<CreatureViewModel | null>(
+    (oldest, creature) =>
+      oldest === null || creature.spawnSequence < oldest.spawnSequence ? creature : oldest,
+    null,
+  );
+
+  if (retiredCreature === null) return { scene, retiredCreature: null };
+
+  return {
+    scene: replaceCreature(scene, retiredCreature.id, false),
+    retiredCreature,
+  };
+}
+
+/*** Select the next unused round word from the required answer class. */
+function selectReplacementWord(scene: GameScene, matchesTarget: boolean): VocabularyWord {
+  const word = scene.remainingWords.find(
+    (candidate) =>
+      candidate.categoryIds.includes(scene.level.targetCategoryId) === matchesTarget,
+  );
+
+  if (word === undefined) {
+    throw new Error(
+      `Round ${scene.level.id} exhausted its ${matchesTarget ? 'target' : 'distractor'} pool.`,
+    );
+  }
+
+  return word;
 }
 
 /*** Increment the perfect-action streak and award a configured extra life at its threshold. */
@@ -74,29 +150,4 @@ function mistakeProgression(scene: GameScene) {
     correctStreak: 0,
     health: Math.max(0, scene.health - scene.gameplayConfig.wrongActionDamage),
   };
-}
-
-/*** Select the next unused round word while preserving target availability and the configured ratio. */
-function selectReplacementWord(scene: GameScene, forceTarget: boolean): VocabularyWord {
-  const targetWords = scene.remainingWords.filter((word) =>
-    word.categoryIds.includes(scene.level.targetCategoryId),
-  );
-  const distractorWords = scene.remainingWords.filter(
-    (word) => !word.categoryIds.includes(scene.level.targetCategoryId),
-  );
-  const targetPreferred = forceTarget || prefersTarget(scene.spawnSequence, scene.gameplayConfig);
-  const word = targetPreferred
-    ? (targetWords[0] ?? distractorWords[0])
-    : (distractorWords[0] ?? targetWords[0]);
-
-  if (word === undefined) {
-    throw new Error(`Round ${scene.level.id} exhausted its vocabulary pool.`);
-  }
-
-  return word;
-}
-
-/*** Return whether one replacement slot should favor a target word. */
-function prefersTarget(sequence: number, config: GameplayConfig) {
-  return sequence % config.spawnCycleLength < config.targetSpawnsPerCycle;
 }
