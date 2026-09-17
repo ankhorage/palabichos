@@ -92,8 +92,8 @@ function selectReplacementWord(scene: GameScene): VocabularyWord {
   );
   const targetPreferred = prefersTarget(scene.spawnSequence, scene.gameplayConfig);
   const word = targetPreferred
-    ? targetWords[0] ?? distractorWords[0]
-    : distractorWords[0] ?? targetWords[0];
+    ? (targetWords[0] ?? distractorWords[0])
+    : (distractorWords[0] ?? targetWords[0]);
 
   if (word === undefined) {
     throw new Error(`Round ${scene.level.id} exhausted its vocabulary pool.`);
