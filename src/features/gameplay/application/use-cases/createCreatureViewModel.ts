@@ -9,12 +9,14 @@ export function createCreatureViewModel(
   presentationSeed = 0,
   occupiedCreatures: readonly CreatureViewModel[] = [],
   minimumDistancePercent = 0,
+  avoidPosition: { readonly xPercent: number; readonly yPercent: number } | null = null,
 ): CreatureViewModel {
   const position = selectPosition(
     sequence,
     presentationSeed,
     occupiedCreatures,
     minimumDistancePercent,
+    avoidPosition,
   );
   const variant = VARIANTS[sequence % VARIANTS.length];
   const motion = MOTIONS[sequence % MOTIONS.length];
@@ -28,6 +30,7 @@ export function createCreatureViewModel(
     word,
     matchesTarget: word.categoryIds.includes(targetCategoryId),
     spawnSequence: sequence,
+    ageInCorrectShots: 0,
     xPercent: position.xPercent,
     yPercent: position.yPercent,
     variant,
@@ -37,12 +40,13 @@ export function createCreatureViewModel(
   };
 }
 
-/*** Select the first deterministic presentation slot with enough distance from active creatures. */
+/*** Select a deterministic readable slot while preferring a different region from the retired slot. */
 function selectPosition(
   sequence: number,
   presentationSeed: number,
   occupiedCreatures: readonly CreatureViewModel[],
   minimumDistancePercent: number,
+  avoidPosition: { readonly xPercent: number; readonly yPercent: number } | null,
 ): CreaturePosition {
   const positionOffset = createPositionOffset(presentationSeed);
   const startIndex = (sequence + positionOffset) % POSITIONS.length;
@@ -50,9 +54,13 @@ function selectPosition(
     { length: POSITIONS.length },
     (_, offset) => POSITIONS[(startIndex + offset) % POSITIONS.length] ?? POSITIONS[0],
   );
-  const position = candidates.find((candidate) =>
+  const available = candidates.filter((candidate) =>
     isPositionAvailable(candidate, occupiedCreatures, minimumDistancePercent),
   );
+  const position =
+    avoidPosition === null
+      ? available[0]
+      : (available.find((candidate) => !isSameRegion(candidate, avoidPosition)) ?? available[0]);
 
   if (position === undefined) {
     throw new Error('Creature presentation cannot find a readable free position.');
@@ -74,6 +82,14 @@ function isPositionAvailable(
       Math.hypot(position.xPercent - creature.xPercent, position.yPercent - creature.yPercent) >=
       minimumDistancePercent,
   );
+}
+
+/*** Return whether two positions occupy the same broad horizontal and vertical playfield region. */
+function isSameRegion(
+  first: { readonly xPercent: number; readonly yPercent: number },
+  second: { readonly xPercent: number; readonly yPercent: number },
+) {
+  return (first.xPercent < 50) === (second.xPercent < 50) && (first.yPercent < 45) === (second.yPercent < 45);
 }
 
 /*** Convert one round random seed into a stable presentation-slot offset. */
