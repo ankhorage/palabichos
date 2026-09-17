@@ -22,6 +22,7 @@ export function useGameInteraction(
   const runtime = useInteractionRuntime(initialScene);
   const damage = useProjectileDamage({
     playerXPercent,
+    resetPlayer,
     sceneRef: runtime.sceneRef,
     setLetterProjectiles: feedback.setLetterProjectiles,
     setScene,
@@ -177,7 +178,10 @@ function showShot(creature: CreatureViewModel, context: GameInteractionContext) 
     toYPercent: creature.yPercent,
   });
   clearTimer(context.shotTimerRef);
-  context.shotTimerRef.current = window.setTimeout(() => context.setShot(null), SHOT_VISIBLE_MS);
+  context.shotTimerRef.current = window.setTimeout(
+    () => context.setShot(null),
+    context.sceneRef.current.gameplayConfig.shotVisibleMs,
+  );
 }
 
 /*** Clear the browser feedback timers when the interaction adapter unmounts. */
@@ -195,5 +199,3 @@ function clearTimer(timerRef: { current: number | null }) {
   window.clearTimeout(timerRef.current);
   timerRef.current = null;
 }
-
-const SHOT_VISIBLE_MS = 220;
