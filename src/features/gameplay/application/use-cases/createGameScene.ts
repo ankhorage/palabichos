@@ -9,6 +9,7 @@ export function createGameScene(
   categoryId: string,
   levelIndex = 0,
   presentationSeed = 0,
+  playedCategoryIds: readonly string[] = [categoryId],
 ): GameScene {
   const gameplayConfigId: GameplayConfigId = 'starter';
   const gameplayConfig = GAMEPLAY_CONFIGS.starter;
@@ -19,6 +20,9 @@ export function createGameScene(
       `Category ${categoryId} requires at least ${gameplayConfig.roundTargetCount} target words.`,
     );
   }
+  const categoryCycleIds = playedCategoryIds.includes(category.id)
+    ? playedCategoryIds
+    : [...playedCategoryIds, category.id];
   const resolvedWordIds: readonly string[] = [];
   const boardSequence = 0;
   const creatures = createGameBoard({
@@ -41,6 +45,7 @@ export function createGameScene(
     },
     gameplayConfig,
     levelIndex,
+    playedCategoryIds: categoryCycleIds,
     phase: 'playing',
     collectedCount: 0,
     correctStreak: 0,
