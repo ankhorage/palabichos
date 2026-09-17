@@ -35,7 +35,7 @@ describe('applyCreatureAction correctness', () => {
   });
 });
 
-describe('applyCreatureAction active field', () => {
+describe('applyCreatureAction active mix', () => {
   test('keeps the configured three-target three-distractor mix through correct-only play', () => {
     const scenes = playCorrectShots(createGameScene('animals'), 12);
 
@@ -64,7 +64,9 @@ describe('applyCreatureAction active field', () => {
     expect(result.retiredCreature).toBeNull();
     expect(distractors.every((creature) => creature.ageInCorrectShots === 1)).toBe(true);
   });
+});
 
+describe('applyCreatureAction distractor churn', () => {
   test('rotates eligible distractors at varied ages before they become stale', () => {
     const initial = createGameScene('animals', 0, 0.37);
     const results = playCorrectShotResults(initial, 17);
@@ -73,7 +75,7 @@ describe('applyCreatureAction active field', () => {
       .filter((entry) => entry.creature !== null);
     const retirementGaps = retirements
       .slice(1)
-      .map((entry, index) => entry.shotNumber - (retirements[index]?.shotNumber ?? 0));
+      .map((entry, index) => entry.shotNumber - (retirements.at(index)?.shotNumber ?? 0));
 
     expect(retirements.length).toBeGreaterThan(5);
     expect(
@@ -85,17 +87,7 @@ describe('applyCreatureAction active field', () => {
       ),
     ).toBe(true);
     expect(new Set(retirementGaps).size).toBeGreaterThan(1);
-    expect(
-      results.every((result) =>
-        result.scene.creatures
-          .filter((creature) => !creature.matchesTarget)
-          .every(
-            (creature) =>
-              creature.ageInCorrectShots <=
-              result.scene.gameplayConfig.distractorRetireMaxAgeCorrectShots,
-          ),
-      ),
-    ).toBe(true);
+    expect(results.every((result) => hasNoStaleDistractors(result.scene))).toBe(true);
   });
 
   test('keeps active distractor categories diverse through churn', () => {
@@ -103,7 +95,9 @@ describe('applyCreatureAction active field', () => {
 
     expect(results.every((result) => hasDistinctDistractorCategories(result.scene))).toBe(true);
   });
+});
 
+describe('applyCreatureAction churn placement', () => {
   test('moves churn replacements away from the retired presentation region when possible', () => {
     const result = playCorrectShotResults(createGameScene('animals', 0, 0.37), 6).find(
       (candidate) => candidate.retiredCreature !== null,
@@ -167,6 +161,16 @@ function playCorrectShotResults(
     const creature = requireCreature(current, true);
     return [...results, applyCreatureAction(current, creature.id)];
   }, []);
+}
+
+/*** Return whether no active distractor exceeds the configured maximum churn age. */
+function hasNoStaleDistractors(scene: GameScene) {
+  return scene.creatures
+    .filter((creature) => !creature.matchesTarget)
+    .every(
+      (creature) =>
+        creature.ageInCorrectShots <= scene.gameplayConfig.distractorRetireMaxAgeCorrectShots,
+    );
 }
 
 /*** Return whether every active creature pair keeps the configured minimum presentation distance. */
