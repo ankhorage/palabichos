@@ -8,19 +8,23 @@ import { CollectRing } from './CollectRing';
 import { useCreatureGesture } from './useCreatureGesture';
 import { WordCreatureLabel } from './WordCreatureLabel';
 
-/*** Render one readable word creature with translated resolution feedback. */
+/*** Render one readable word creature with translated action-based resolution feedback. */
 export function WordCreature({
   creature,
   disabled,
   gameplayConfig,
-  mistake,
   onAction,
   resolution,
 }: WordCreatureProps) {
   const { handlers, holding } = useCreatureGesture(creature, onAction, gameplayConfig);
   const style = {
     animationDelay: `${creature.animationDelaySeconds}s`,
-    animationDuration: `${creature.animationDurationSeconds}s`,
+    animationDuration:
+      resolution === null
+        ? `${creature.animationDurationSeconds}s`
+        : resolution.isCorrect
+          ? undefined
+          : `${gameplayConfig.mistakeVisibleMs}ms`,
     left: `${creature.xPercent}%`,
     top: `${creature.yPercent}%`,
   };
@@ -32,7 +36,6 @@ export function WordCreature({
     resolution === null ? '' : 'word-creature--resolving',
     resolution?.isCorrect === true ? 'word-creature--reward' : '',
     resolution?.isCorrect === false ? 'word-creature--resolution-mistake' : '',
-    mistake ? 'word-creature--mistake' : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -70,7 +73,6 @@ interface WordCreatureProps {
   readonly creature: CreatureViewModel;
   readonly disabled: boolean;
   readonly gameplayConfig: GameplayConfig;
-  readonly mistake: boolean;
   readonly onAction: (creature: CreatureViewModel, action: CreatureAction) => void;
   readonly resolution: CreatureResolution | null;
 }
