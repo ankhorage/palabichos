@@ -1,8 +1,8 @@
-import { useEffect } from 'react';
+import { type CSSProperties, useEffect } from 'react';
 
 import type { LetterProjectileSpec } from '../../../../../types/gameplay';
 
-/*** Render one falling letter projectile and report when it crosses the player lane. */
+/*** Render one configured falling letter and report when it crosses the player lane. */
 export function LetterProjectile({
   onComplete,
   onCrossPlayerLane,
@@ -16,15 +16,19 @@ export function LetterProjectile({
     return () => window.clearTimeout(timerId);
   }, [onCrossPlayerLane, projectile.id, projectile.impactDelayMs, projectile.impactXPercent]);
 
+  const style: ProjectileStyle = {
+    '--projectile-drift': `${projectile.driftPercent}vw`,
+    '--projectile-fall-distance': `${projectile.fallDistancePercent}dvh`,
+    animationDelay: `${projectile.delayMs}ms`,
+    animationDuration: `${projectile.durationMs}ms`,
+    left: `${projectile.startXPercent}%`,
+    top: `${projectile.startYPercent}%`,
+  };
+
   return (
     <span
-      className={`letter-projectile letter-projectile--${projectile.trajectory}`}
-      style={{
-        animationDelay: `${projectile.delayMs}ms`,
-        animationDuration: `${projectile.durationMs}ms`,
-        left: `${projectile.startXPercent}%`,
-        top: `${projectile.startYPercent}%`,
-      }}
+      className="letter-projectile"
+      style={style}
       data-letter-projectile={projectile.id}
       onAnimationEnd={() => onComplete(projectile.id)}
       aria-hidden="true"
@@ -38,4 +42,9 @@ interface LetterProjectileProps {
   readonly projectile: LetterProjectileSpec;
   readonly onComplete: (projectileId: string) => void;
   readonly onCrossPlayerLane: (projectileId: string, impactXPercent: number) => void;
+}
+
+interface ProjectileStyle extends CSSProperties {
+  readonly '--projectile-drift': string;
+  readonly '--projectile-fall-distance': string;
 }
