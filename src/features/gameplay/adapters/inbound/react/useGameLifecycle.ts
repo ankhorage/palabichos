@@ -34,7 +34,7 @@ interface SceneReplacementContext {
   readonly setShot: Dispatch<SetStateAction<ShotViewModel | null>>;
 }
 
-/*** Schedule the short success pause before advancing to the next catalog level. */
+/*** Schedule the configured success pause before advancing to the next catalog level. */
 function useAutomaticLevelAdvance({
   resetInvulnerability,
   resetPlayer,
@@ -61,12 +61,13 @@ function useAutomaticLevelAdvance({
           setScene,
           setShot,
         }),
-      LEVEL_COMPLETE_VISIBLE_MS,
+      scene.gameplayConfig.levelCompleteVisibleMs,
     );
     return () => clearTransitionTimer(transitionTimerRef);
   }, [
     resetInvulnerability,
     resetPlayer,
+    scene.gameplayConfig.levelCompleteVisibleMs,
     scene.phase,
     sceneRef,
     setLetterProjectiles,
@@ -98,5 +99,3 @@ function clearTransitionTimer(timerRef: MutableRefObject<number | null>) {
   window.clearTimeout(timerRef.current);
   timerRef.current = null;
 }
-
-const LEVEL_COMPLETE_VISIBLE_MS = 1200;
