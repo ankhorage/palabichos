@@ -31,7 +31,7 @@ export const GAMEPLAY_CONFIGS = {
     projectileNearDriftPercent: 7,
     projectileFarDriftPercent: 14,
     playerHitRadiusPercent: 7,
-    invulnerabilityMs: 700,
+    invulnerabilityMs: 1800,
     levelCompleteVisibleMs: 1200,
     rewardParticleCount: 8,
     hitStopMs: 320,
