@@ -31,6 +31,8 @@ describe('randomized initial scene', () => {
     const last = createInitialGameScene(0.999999);
 
     expect(first.level.targetCategoryId).not.toBe(last.level.targetCategoryId);
+    expect(first.playedCategoryIds).toEqual([first.level.targetCategoryId]);
+    expect(last.playedCategoryIds).toEqual([last.level.targetCategoryId]);
     expect(first.phase).toBe('playing');
     expect(last.phase).toBe('playing');
   });
