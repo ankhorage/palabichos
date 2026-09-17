@@ -1,4 +1,4 @@
-import type { GameScene, GameplayConfig, GameplayConfigId } from '../../../../types/gameplay';
+import type { GameplayConfig, GameplayConfigId, GameScene } from '../../../../types/gameplay';
 import type { VocabularyWord } from '../../../../types/vocabulary';
 import { getVocabularyCategory } from '../../../vocabulary/application/use-cases/getVocabularyCategory';
 import { getVocabularyWordsForCategory } from '../../../vocabulary/application/use-cases/getVocabularyWordsForCategory';
