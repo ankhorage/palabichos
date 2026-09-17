@@ -21,26 +21,7 @@ export function createGameScene(
   const gameplayConfigId: GameplayConfigId = 'starter';
   const gameplayConfig = GAMEPLAY_CONFIGS.starter;
   const category = getVocabularyCategory(categoryId);
-  const targetWords = getVocabularyWordsForCategory(categoryId);
-  const distractorWords = diversifyDistractorWords(
-    getVocabularyWordsOutsideCategory(categoryId),
-    categoryId,
-  );
-
-  validateRoundPools(categoryId, targetWords, distractorWords, gameplayConfig);
-
-  const initialWords = selectInitialWords(targetWords, distractorWords, gameplayConfig);
-  const usedWordIds = initialWords.map((word) => word.id);
-  const usedWordIdSet = new Set(usedWordIds);
-  const remainingWords = [...targetWords, ...distractorWords].filter(
-    (word) => !usedWordIdSet.has(word.id),
-  );
-  const creatures = createInitialCreatures(
-    initialWords,
-    category.id,
-    presentationSeed,
-    gameplayConfig,
-  );
+  const roundContent = createRoundContent(category.id, presentationSeed, gameplayConfig);
 
   return {
     level: {
@@ -57,14 +38,51 @@ export function createGameScene(
     collectedCount: 0,
     correctStreak: 0,
     health: gameplayConfig.startingHealth,
+    ...roundContent,
+    spawnSequence: 0,
+    presentationSeed,
+  };
+}
+
+interface RoundContent {
+  readonly creatures: readonly CreatureViewModel[];
+  readonly remainingWords: readonly VocabularyWord[];
+  readonly usedWordIds: readonly string[];
+  readonly recentDistractorCategoryIds: readonly string[];
+}
+
+/*** Build round-local vocabulary, active creatures, and distractor-history state. */
+function createRoundContent(
+  categoryId: string,
+  presentationSeed: number,
+  gameplayConfig: GameplayConfig,
+): RoundContent {
+  const targetWords = getVocabularyWordsForCategory(categoryId);
+  const distractorWords = diversifyDistractorWords(
+    getVocabularyWordsOutsideCategory(categoryId),
+    categoryId,
+  );
+  validateRoundPools(categoryId, targetWords, distractorWords, gameplayConfig);
+  const initialWords = selectInitialWords(targetWords, distractorWords, gameplayConfig);
+  const usedWordIds = initialWords.map((word) => word.id);
+  const usedWordIdSet = new Set(usedWordIds);
+  const remainingWords = [...targetWords, ...distractorWords].filter(
+    (word) => !usedWordIdSet.has(word.id),
+  );
+  const creatures = createInitialCreatures(
+    initialWords,
+    categoryId,
+    presentationSeed,
+    gameplayConfig,
+  );
+
+  return {
     creatures,
     remainingWords,
     usedWordIds,
-    spawnSequence: 0,
-    presentationSeed,
     recentDistractorCategoryIds: createInitialDistractorCategoryHistory(
       creatures,
-      category.id,
+      categoryId,
       gameplayConfig.distractorRecentCategoryWindow,
     ),
   };
@@ -96,7 +114,9 @@ function validateRoundPools(
     config.distractorRetireMinAgeCorrectShots <= 0 ||
     config.distractorRetireMaxAgeCorrectShots < config.distractorRetireMinAgeCorrectShots
   ) {
-    throw new Error('Distractor churn ages must define a positive minimum no greater than maximum.');
+    throw new Error(
+      'Distractor churn ages must define a positive minimum no greater than maximum.',
+    );
   }
 }
 
