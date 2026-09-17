@@ -36,7 +36,9 @@ export interface GameplayConfig {
   readonly initialCreatureCount: number;
   readonly activeTargetCount: number;
   readonly creatureMinimumDistancePercent: number;
-  readonly distractorRetireEveryCorrectShots: number;
+  readonly distractorRetireMinAgeCorrectShots: number;
+  readonly distractorRetireMaxAgeCorrectShots: number;
+  readonly distractorRecentCategoryWindow: number;
   readonly distractorPuffVisibleMs: number;
   readonly movementZoneStartPercent: number;
   readonly playerMinXPercent: number;
@@ -78,6 +80,7 @@ export interface CreatureViewModel extends CreatureAppearance {
   readonly word: VocabularyWord;
   readonly matchesTarget: boolean;
   readonly spawnSequence: number;
+  readonly ageInCorrectShots: number;
 }
 
 export interface CreatureResolution {
@@ -102,6 +105,7 @@ export interface GameScene {
   readonly usedWordIds: readonly string[];
   readonly spawnSequence: number;
   readonly presentationSeed: number;
+  readonly recentDistractorCategoryIds: readonly string[];
 }
 
 export interface CreatureActionResult {
