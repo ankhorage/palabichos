@@ -111,7 +111,7 @@ function playCorrectShots(scene: GameScene, shotCount: number): readonly GameSce
 
 /*** Apply a fixed number of correct target shots and return the resulting scene. */
 function shootTargets(scene: GameScene, shotCount: number): GameScene {
-  return Array.from({ length: shotCount }).reduce((current) => {
+  return Array.from({ length: shotCount }).reduce<GameScene>((current) => {
     const creature = requireCreature(current, true);
     return applyCreatureAction(current, creature.id).scene;
   }, scene);
