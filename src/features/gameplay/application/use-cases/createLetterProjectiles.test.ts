@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
+import { getVocabularyWordsForCategory } from '../../../vocabulary/application/use-cases/getVocabularyWordsForCategory';
 import { createCreatureViewModel } from './createCreatureViewModel';
 import { createGameScene } from './createGameScene';
 import { createLetterProjectiles } from './createLetterProjectiles';
@@ -7,7 +8,9 @@ import { createLetterProjectiles } from './createLetterProjectiles';
 describe('createLetterProjectiles', () => {
   test('emits configured readable projectiles and preserves German umlauts', () => {
     const scene = createGameScene('food');
-    const word = scene.remainingWords.find((candidate) => candidate.text === 'queso');
+    const word = getVocabularyWordsForCategory('food').find(
+      (candidate) => candidate.text === 'queso',
+    );
 
     expect(word).toBeDefined();
     if (word === undefined) return;
