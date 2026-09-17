@@ -5,6 +5,7 @@ import type {
 } from '../../../../types/gameplay';
 import type { VocabularyWord } from '../../../../types/vocabulary';
 import { getDistractorCategoryId } from '../../utils/getDistractorCategoryId';
+import { isSameCreatureRegion } from '../../utils/isSameCreatureRegion';
 import { createCreatureViewModel } from './createCreatureViewModel';
 
 /*** Apply one creature shot and return the next immutable gameplay scene. */
@@ -109,14 +110,51 @@ interface DistractorRetirement {
   readonly retiredCreature: CreatureViewModel | null;
 }
 
-/*** Retire the oldest eligible distractor according to its deterministic age threshold. */
+/*** Retire one eligible distractor, replace it neutrally, and rotate distractor positions. */
 function retireEligibleDistractor(scene: GameScene): DistractorRetirement {
   const retiredCreature = selectDistractorForRetirement(scene);
   if (retiredCreature === null) return { scene, retiredCreature: null };
 
+  const replacedScene = replaceCreature(scene, retiredCreature.id, false, retiredCreature);
   return {
-    scene: replaceCreature(scene, retiredCreature.id, false, retiredCreature),
+    scene: rotateDistractorPositions(replacedScene, retiredCreature),
     retiredCreature,
+  };
+}
+
+/*** Rotate active distractor positions while moving the newest distractor to another region. */
+function rotateDistractorPositions(scene: GameScene, retiredCreature: CreatureViewModel): GameScene {
+  const distractors = scene.creatures.filter((creature) => !creature.matchesTarget);
+  const replacement = distractors.reduce<CreatureViewModel | null>(
+    (newest, creature) =>
+      newest === null || creature.spawnSequence > newest.spawnSequence ? creature : newest,
+    null,
+  );
+  if (replacement === null) return scene;
+
+  const donor = distractors.find(
+    (creature) =>
+      creature.id !== replacement.id && !isSameCreatureRegion(creature, retiredCreature),
+  );
+  if (donor === undefined) return scene;
+
+  const remaining = distractors.filter(
+    (creature) => creature.id !== replacement.id && creature.id !== donor.id,
+  );
+  const ordered = [replacement, donor, ...remaining];
+  const positions = ordered.map((creature) => ({
+    xPercent: creature.xPercent,
+    yPercent: creature.yPercent,
+  }));
+
+  return {
+    ...scene,
+    creatures: scene.creatures.map((creature) => {
+      const index = ordered.findIndex((candidate) => candidate.id === creature.id);
+      if (index < 0) return creature;
+      const nextPosition = positions.at((index + 1) % positions.length);
+      return nextPosition === undefined ? creature : { ...creature, ...nextPosition };
+    }),
   };
 }
 
@@ -163,7 +201,7 @@ function selectReplacementWord(
     (candidate) => candidate.categoryIds.includes(scene.level.targetCategoryId) === matchesTarget,
   );
   const word = matchesTarget
-    ? candidates[0]
+    ? candidates.at(0)
     : selectFreshDistractorWord(scene, candidates, replacedCreatureId);
 
   if (word === undefined) {
@@ -208,7 +246,7 @@ function selectFreshDistractorWord(
     candidates.find(isFresh) ??
     candidates.find(isNotActive) ??
     candidates.find(isNotRecent) ??
-    candidates[0]
+    candidates.at(0)
   );
 }
 
