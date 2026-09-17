@@ -1,13 +1,24 @@
-/*** Render the player avatar at the current horizontal gameplay position. */
-export function PlayerCharacter({ invulnerable, xPercent }: PlayerCharacterProps) {
-  const className = invulnerable ? 'player player--invulnerable' : 'player';
+import type { PlayerHitPhase } from '../../../../../types/gameplay';
+
+/*** Render the player avatar with K.O., hidden, and respawn feedback phases. */
+export function PlayerCharacter({ hitPhase, invulnerable, xPercent }: PlayerCharacterProps) {
+  const knockedOut = hitPhase === 'hitstop';
+  const className = [
+    'player',
+    invulnerable ? 'player--invulnerable' : '',
+    hitPhase === 'hitstop' ? 'player--hitstop' : '',
+    hitPhase === 'hidden' ? 'player--hidden' : '',
+    hitPhase === 'respawning' ? 'player--respawning' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <div className={className} style={{ left: `${xPercent}%` }} aria-label="Jugador">
       <div className="player-shadow" aria-hidden="true" />
       <div className="player-head" aria-hidden="true">
-        <span className="player-eye player-eye-left" />
-        <span className="player-eye player-eye-right" />
+        <span className="player-eye player-eye-left">{knockedOut ? '×' : null}</span>
+        <span className="player-eye player-eye-right">{knockedOut ? '×' : null}</span>
       </div>
       <div className="player-body" aria-hidden="true">
         <span className="player-emblem">P</span>
@@ -19,6 +30,7 @@ export function PlayerCharacter({ invulnerable, xPercent }: PlayerCharacterProps
 }
 
 interface PlayerCharacterProps {
+  readonly hitPhase: PlayerHitPhase;
   readonly invulnerable: boolean;
   readonly xPercent: number;
 }
