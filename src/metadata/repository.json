@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "kind": "application",
+  "title": "Palabichos",
+  "summary": "A mobile-first browser arcade game that reinforces Spanish vocabulary through play.",
+  "purpose": "Provide an approachable game experience in which repeated play supports Spanish vocabulary practice.",
+  "domain": "language-learning game",
+  "responsibilities": [
+    "Deliver the browser game interface and gameplay loop.",
+    "Present Spanish vocabulary as part of the play experience.",
+    "Own the application-specific game state and player interactions."
+  ],
+  "boundaries": [
+    "Does not provide a reusable game engine package.",
+    "Does not own general-purpose language-learning contracts or content services.",
+    "Does not expose its application behavior as a published library API."
+  ],
+  "audience": [
+    "Spanish learners who want lightweight vocabulary practice in a browser."
+  ],
+  "useCases": [
+    "Play a short mobile-friendly vocabulary arcade session.",
+    "Practice recognizing Spanish vocabulary through repeated game interactions."
+  ],
+  "architecture": {
+    "role": "Standalone React browser application that composes game presentation, interactions, and vocabulary content.",
+    "invariants": [
+      "The application remains independently buildable and deployable.",
+      "Game-specific behavior stays within the application rather than being presented as a reusable platform contract."
+    ]
+  },
+  "constraints": {
+    "platforms": [
+      "Modern web browsers with JavaScript enabled."
+    ]
+  }
+}
