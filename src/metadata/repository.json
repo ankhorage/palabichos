@@ -15,9 +15,7 @@
     "Does not own general-purpose language-learning contracts or content services.",
     "Does not expose its application behavior as a published library API."
   ],
-  "audience": [
-    "Spanish learners who want lightweight vocabulary practice in a browser."
-  ],
+  "audience": ["Spanish learners who want lightweight vocabulary practice in a browser."],
   "useCases": [
     "Play a short mobile-friendly vocabulary arcade session.",
     "Practice recognizing Spanish vocabulary through repeated game interactions."
