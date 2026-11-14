@@ -30,8 +30,6 @@
     ]
   },
   "constraints": {
-    "platforms": [
-      "Modern web browsers with JavaScript enabled."
-    ]
+    "platforms": ["Modern web browsers with JavaScript enabled."]
   }
 }
